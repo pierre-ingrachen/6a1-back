@@ -2,13 +2,6 @@
 -- PostgreSQL 14+. A executer avant 02_data.sql.
 BEGIN;
 
-DROP VIEW IF EXISTS vue_stats_joueur_saison;
-DROP TABLE IF EXISTS parcours_equipe_saison;
-DROP TABLE IF EXISTS stats_joueur_saison;
-DROP TABLE IF EXISTS saison;
-DROP TABLE IF EXISTS joueur;
-DROP TABLE IF EXISTS equipe;
-
 CREATE TABLE equipe (
     equipe_id integer PRIMARY KEY,            -- id WhoScored
     nom       text NOT NULL,                  -- nom abrege du site (ex. 'Man City')
