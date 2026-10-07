@@ -69,14 +69,16 @@ public class PlayerService {
                 .filter(appearance -> normalize(appearance.playerName()).contains(normalizedQuery))
                 .collect(Collectors.groupingBy(PlayerAppearance::playerId, LinkedHashMap::new, Collectors.toList()))
                 .values().stream()
-                .map(this::toSearchResult)
+                .filter(appearances -> season == null || appearances.stream().anyMatch(appearance -> season.equals(appearance.season())))
+                .map(appearances -> toSearchResult(appearances, season))
                 .sorted(Comparator.comparing(PlayerSearchResultDto::name))
                 .limit(MAXIMUM_SEARCH_RESULTS)
                 .toList();
     }
 
-    private PlayerSearchResultDto toSearchResult(List<PlayerAppearance> appearances) {
+    private PlayerSearchResultDto toSearchResult(List<PlayerAppearance> appearances, Short season) {
         PlayerAppearance latest = appearances.stream()
+                .filter(appearance -> season == null || season.equals(appearance.season()))
                 .max(Comparator.comparing(PlayerAppearance::season))
                 .orElseThrow();
         List<PlayerSeasonTeamDto> seasons = appearances.stream()
