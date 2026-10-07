@@ -101,7 +101,7 @@ class TeamControllerTest {
     @Test
     void findPlayersByTeamAndSeasonReturnsOkWithPlayers() throws Exception {
         when(teamService.findPlayersByTeamAndSeason(13, (short) 2024)).thenReturn(List.of(
-                new PlayerDto(1, "Bukayo Saka", "Forward", (short) 178, null)
+                new PlayerDto(1, "Bukayo Saka", "Forward", (short) 5, (short) 3, new java.math.BigDecimal("7.35"))
         ));
 
         mockMvc.perform(get("/teams/13/players").param("season", "2024"))
@@ -109,8 +109,9 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("Bukayo Saka"))
                 .andExpect(jsonPath("$[0].position").value("Forward"))
-                .andExpect(jsonPath("$[0].heightCm").value(178))
-                .andExpect(jsonPath("$[0].weightKg").isEmpty());
+                .andExpect(jsonPath("$[0].goals").value(5))
+                .andExpect(jsonPath("$[0].assists").value(3))
+                .andExpect(jsonPath("$[0].averageRating").value(7.35));
     }
 
     @Test
