@@ -60,7 +60,7 @@ public class PlayerService {
         this.playerSeasonStatsDao = playerSeasonStatsDao;
     }
 
-    public List<PlayerSearchResultDto> searchPlayers(String query) {
+    public List<PlayerSearchResultDto> searchPlayers(Short season, String query) {
         String normalizedQuery = normalize(query.trim());
         if (normalizedQuery.length() < MINIMUM_QUERY_LENGTH) {
             return List.of();

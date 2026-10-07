@@ -23,8 +23,8 @@ public class PlayerController {
     }
 
     @GetMapping("/search")
-    public List<PlayerSearchResultDto> searchPlayers(@RequestParam String query) {
-        return playerService.searchPlayers(query);
+    public List<PlayerSearchResultDto> searchPlayers(@RequestParam Short season, @RequestParam String query) {
+        return playerService.searchPlayers(season, query);
     }
 
     @GetMapping("/{playerId}/stats")
