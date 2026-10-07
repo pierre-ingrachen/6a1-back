@@ -67,6 +67,6 @@ public class TeamService {
     }
 
     private PlayerDto toPlayerDto(PlayerSeasonView player) {
-        return new PlayerDto(player.getId(), player.getName(), player.getPosition(), player.getGoals(), player.getAssists(), player.getAverageRating());
+        return new PlayerDto(player.getId(), player.getName(), player.getPosition(), player.getGoals(), player.getAssists(), player.getAverageRating(), player.getMatchesPlayed());
     }
 }
