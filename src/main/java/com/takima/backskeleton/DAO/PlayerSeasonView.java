@@ -15,5 +15,7 @@ public interface PlayerSeasonView {
 
     BigDecimal getAverageRating();
 
+    Short getRating();
+
     Short getMatchesPlayed();
 }
