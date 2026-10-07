@@ -2,11 +2,13 @@ package com.takima.backskeleton.services;
 
 import com.takima.backskeleton.DAO.PlayerSeasonStatsDao;
 import com.takima.backskeleton.DTO.PlayerSearchResultDto;
+import com.takima.backskeleton.DTO.PlayerSeasonTeamDto;
 import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.DTO.StatCategoryDto;
 import com.takima.backskeleton.DTO.StatDto;
 import com.takima.backskeleton.DTO.StatValueDto;
 import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
+import com.takima.backskeleton.models.PlayerAppearance;
 import com.takima.backskeleton.models.PlayerSeasonStats;
 import com.takima.backskeleton.models.Stat;
 import com.takima.backskeleton.models.StatCategory;
@@ -58,18 +60,32 @@ public class PlayerService {
         this.playerSeasonStatsDao = playerSeasonStatsDao;
     }
 
-    public List<PlayerSearchResultDto> searchPlayers(Short season, String query) {
+    public List<PlayerSearchResultDto> searchPlayers(String query) {
         String normalizedQuery = normalize(query.trim());
         if (normalizedQuery.length() < MINIMUM_QUERY_LENGTH) {
             return List.of();
         }
-        return findSeasonPlayers(season).stream()
-                .map(SeasonPlayer::stats)
-                .filter(stats -> normalize(stats.playerName()).contains(normalizedQuery))
-                .sorted(Comparator.comparing(PlayerSeasonStats::playerName))
+        return playerSeasonStatsDao.findAllAppearances().stream()
+                .filter(appearance -> normalize(appearance.playerName()).contains(normalizedQuery))
+                .collect(Collectors.groupingBy(PlayerAppearance::playerId, LinkedHashMap::new, Collectors.toList()))
+                .values().stream()
+                .map(this::toSearchResult)
+                .sorted(Comparator.comparing(PlayerSearchResultDto::name))
                 .limit(MAXIMUM_SEARCH_RESULTS)
-                .map(stats -> new PlayerSearchResultDto(stats.playerId(), stats.playerName(), stats.position(), stats.teamName()))
                 .toList();
+    }
+
+    private PlayerSearchResultDto toSearchResult(List<PlayerAppearance> appearances) {
+        PlayerAppearance latest = appearances.stream()
+                .max(Comparator.comparing(PlayerAppearance::season))
+                .orElseThrow();
+        List<PlayerSeasonTeamDto> seasons = appearances.stream()
+                .collect(Collectors.toMap(PlayerAppearance::season, PlayerAppearance::teamName, (first, second) -> first, LinkedHashMap::new))
+                .entrySet().stream()
+                .map(entry -> new PlayerSeasonTeamDto(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(PlayerSeasonTeamDto::startYear).reversed())
+                .toList();
+        return new PlayerSearchResultDto(latest.playerId(), latest.playerName(), latest.position(), latest.teamName(), seasons);
     }
 
     public PlayerStatsDto findPlayerStats(Integer playerId, Short season) {
