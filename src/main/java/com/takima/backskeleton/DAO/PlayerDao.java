@@ -10,10 +10,13 @@ import java.util.List;
 @Repository
 public interface PlayerDao extends JpaRepository<Player, Integer> {
     @Query(value = """
-            SELECT j.* FROM joueur j
+            SELECT j.joueur_id AS id, j.nom AS name, j.poste AS position,
+                   s.buts AS goals, s.passes_decisives AS assists,
+                   s.note_moyenne AS "averageRating"
+            FROM joueur j
             JOIN stats_joueur_saison s ON s.joueur_id = j.joueur_id
             WHERE s.equipe_id = :teamId AND s.annee_debut = :season
             ORDER BY j.nom
             """, nativeQuery = true)
-    List<Player> findByTeamIdAndSeason(Integer teamId, Short season);
+    List<PlayerSeasonView> findByTeamIdAndSeason(Integer teamId, Short season);
 }
