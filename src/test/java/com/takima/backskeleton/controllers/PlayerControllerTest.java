@@ -1,6 +1,7 @@
 package com.takima.backskeleton.controllers;
 
 import com.takima.backskeleton.DTO.PlayerSearchResultDto;
+import com.takima.backskeleton.DTO.PlayerSeasonTeamDto;
 import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.DTO.StatCategoryDto;
 import com.takima.backskeleton.DTO.StatDto;
@@ -32,20 +33,21 @@ class PlayerControllerTest {
 
     @Test
     void searchPlayersReturnsOkWithMatchingPlayers() throws Exception {
-        when(playerService.searchPlayers(SEASON, "mba"))
-                .thenReturn(List.of(new PlayerSearchResultDto(123, "Kylian Mbappé", "Forward", "Real Madrid")));
+        when(playerService.searchPlayers("mba"))
+                .thenReturn(List.of(new PlayerSearchResultDto(123, "Kylian Mbappé", "Forward", "Real Madrid", List.of(new PlayerSeasonTeamDto((short) 2025, "Real Madrid"), new PlayerSeasonTeamDto((short) 2024, "PSG")))));
 
-        mockMvc.perform(get("/players/search").param("season", "2025").param("query", "mba"))
+        mockMvc.perform(get("/players/search").param("query", "mba"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(123))
                 .andExpect(jsonPath("$[0].name").value("Kylian Mbappé"))
-                .andExpect(jsonPath("$[0].teamName").value("Real Madrid"));
+                .andExpect(jsonPath("$[0].teamName").value("Real Madrid"))
+                .andExpect(jsonPath("$[0].seasons.length()").value(2));
     }
 
     @Test
     void searchPlayersReturnsBadRequestWithoutQuery() throws Exception {
-        mockMvc.perform(get("/players/search").param("season", "2025"))
+        mockMvc.perform(get("/players/search"))
                 .andExpect(status().isBadRequest());
     }
 

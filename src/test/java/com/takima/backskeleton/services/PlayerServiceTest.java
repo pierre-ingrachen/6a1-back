@@ -2,10 +2,12 @@ package com.takima.backskeleton.services;
 
 import com.takima.backskeleton.DAO.PlayerSeasonStatsDao;
 import com.takima.backskeleton.DTO.PlayerSearchResultDto;
+import com.takima.backskeleton.DTO.PlayerSeasonTeamDto;
 import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.DTO.StatDto;
 import com.takima.backskeleton.DTO.StatValueDto;
 import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
+import com.takima.backskeleton.models.PlayerAppearance;
 import com.takima.backskeleton.models.PlayerSeasonStats;
 import com.takima.backskeleton.models.Stat;
 import org.junit.jupiter.api.Test;
@@ -204,33 +206,59 @@ class PlayerServiceTest {
 
     @Test
     void searchPlayersIgnoresAccentsAndCaseAndSortsByName() {
-        givenSeasonRows(
-                named(1, "Kylian Mbappé"),
-                named(2, "Bryan Mbeumo"),
-                named(3, "Erling Haaland")
+        givenAppearances(
+                appearance(1, "Kylian Mbappé", 2025, "Real Madrid"),
+                appearance(2, "Bryan Mbeumo", 2025, "Manchester United"),
+                appearance(3, "Erling Haaland", 2025, "Manchester City")
         );
 
-        List<PlayerSearchResultDto> results = playerService.searchPlayers(SEASON, "MBAPPE");
-
-        assertThat(results).extracting(PlayerSearchResultDto::name).containsExactly("Kylian Mbappé");
-        assertThat(playerService.searchPlayers(SEASON, "mb"))
+        assertThat(playerService.searchPlayers("MBAPPE"))
+                .extracting(PlayerSearchResultDto::name)
+                .containsExactly("Kylian Mbappé");
+        assertThat(playerService.searchPlayers("mb"))
                 .extracting(PlayerSearchResultDto::name)
                 .containsExactly("Bryan Mbeumo", "Kylian Mbappé");
     }
 
     @Test
-    void searchPlayersReturnsAtMostTwentyResults() {
-        givenSeasonRows(IntStream.rangeClosed(1, 30)
-                .mapToObj(id -> named(id, "Player " + id))
-                .toArray(PlayerSeasonStats[]::new));
+    void searchPlayersFindsRetiredPlayersWithAllTheirSeasonsAndLatestTeam() {
+        givenAppearances(
+                appearance(7, "Cristiano Ronaldo", 2021, "Manchester United"),
+                appearance(7, "Cristiano Ronaldo", 2018, "Juventus"),
+                appearance(7, "Cristiano Ronaldo", 2018, "Real Madrid"),
+                appearance(8, "Erling Haaland", 2025, "Manchester City")
+        );
 
-        assertThat(playerService.searchPlayers(SEASON, "player")).hasSize(PlayerService.MAXIMUM_SEARCH_RESULTS);
+        List<PlayerSearchResultDto> results = playerService.searchPlayers("ronaldo");
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).teamName()).isEqualTo("Manchester United");
+        assertThat(results.get(0).seasons()).containsExactly(
+                new PlayerSeasonTeamDto((short) 2021, "Manchester United"),
+                new PlayerSeasonTeamDto((short) 2018, "Juventus"));
+    }
+
+    @Test
+    void searchPlayersReturnsAtMostTwentyResults() {
+        givenAppearances(IntStream.rangeClosed(1, 30)
+                .mapToObj(id -> appearance(id, "Player " + id, 2025, "Team"))
+                .toArray(PlayerAppearance[]::new));
+
+        assertThat(playerService.searchPlayers("player")).hasSize(PlayerService.MAXIMUM_SEARCH_RESULTS);
     }
 
     @Test
     void searchPlayersReturnsNothingForTooShortQuery() {
-        assertThat(playerService.searchPlayers(SEASON, " m ")).isEmpty();
-        verify(playerSeasonStatsDao, never()).findBySeason(any());
+        assertThat(playerService.searchPlayers(" m ")).isEmpty();
+        verify(playerSeasonStatsDao, never()).findAllAppearances();
+    }
+
+    private void givenAppearances(PlayerAppearance... appearances) {
+        when(playerSeasonStatsDao.findAllAppearances()).thenReturn(List.of(appearances));
+    }
+
+    private static PlayerAppearance appearance(int id, String name, int season, String team) {
+        return new PlayerAppearance(id, name, "Forward", (short) season, team);
     }
 
     private void givenSeasonRows(PlayerSeasonStats... rows) {

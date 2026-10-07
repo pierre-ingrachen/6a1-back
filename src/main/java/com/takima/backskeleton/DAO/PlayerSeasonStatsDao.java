@@ -1,5 +1,6 @@
 package com.takima.backskeleton.DAO;
 
+import com.takima.backskeleton.models.PlayerAppearance;
 import com.takima.backskeleton.models.PlayerSeasonStats;
 import com.takima.backskeleton.models.Stat;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -25,6 +26,14 @@ public class PlayerSeasonStatsDao {
             WHERE s.annee_debut = :season
             """;
 
+    private static final String FIND_ALL_APPEARANCES = """
+            SELECT j.joueur_id, j.nom AS joueur_nom, j.poste, s.annee_debut, e.nom AS equipe_nom
+            FROM stats_joueur_saison s
+            JOIN joueur j ON j.joueur_id = s.joueur_id
+            JOIN equipe e ON e.equipe_id = s.equipe_id
+            ORDER BY s.annee_debut DESC, s.matchs_joues DESC
+            """;
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public PlayerSeasonStatsDao(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -34,6 +43,17 @@ public class PlayerSeasonStatsDao {
     public List<PlayerSeasonStats> findBySeason(Short season) {
         return jdbcTemplate.queryForList(FIND_BY_SEASON, Map.of("season", season)).stream()
                 .map(this::toPlayerSeasonStats)
+                .toList();
+    }
+
+    public List<PlayerAppearance> findAllAppearances() {
+        return jdbcTemplate.queryForList(FIND_ALL_APPEARANCES, Map.of()).stream()
+                .map(row -> new PlayerAppearance(
+                        ((Number) row.get("joueur_id")).intValue(),
+                        (String) row.get("joueur_nom"),
+                        (String) row.get("poste"),
+                        toShort(row.get("annee_debut")),
+                        (String) row.get("equipe_nom")))
                 .toList();
     }
 
