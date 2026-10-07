@@ -23,7 +23,7 @@ public class PlayerController {
     }
 
     @GetMapping("/search")
-    public List<PlayerSearchResultDto> searchPlayers(@RequestParam Short season, @RequestParam String query) {
+    public List<PlayerSearchResultDto> searchPlayers(@RequestParam String query, @RequestParam(required = false) Short season) {
         return playerService.searchPlayers(season, query);
     }
 
