@@ -12,7 +12,8 @@ public interface PlayerDao extends JpaRepository<Player, Integer> {
     @Query(value = """
             SELECT j.joueur_id AS id, j.nom AS name, j.poste AS position,
                    s.buts AS goals, s.passes_decisives AS assists,
-                   s.note_moyenne AS "averageRating"
+                   s.note_moyenne AS "averageRating",
+                   s.matchs_joues AS "matchesPlayed"
             FROM joueur j
             JOIN stats_joueur_saison s ON s.joueur_id = j.joueur_id
             WHERE s.equipe_id = :teamId AND s.annee_debut = :season

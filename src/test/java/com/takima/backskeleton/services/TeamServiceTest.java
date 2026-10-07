@@ -111,15 +111,15 @@ class TeamServiceTest {
     void findPlayersByTeamAndSeasonConvertsEntitiesToDtosKeepingUnknownValues() {
         when(teamDao.existsById(ARSENAL_ID)).thenReturn(true);
         when(playerDao.findByTeamIdAndSeason(ARSENAL_ID, SEASON_2024)).thenReturn(List.of(
-                view(1, "Bukayo Saka", "Forward", (short) 5, (short) 3, new BigDecimal("7.35")),
-                view(2, "Unknown Keeper", "Goalkeeper", null, null, null)
+                view(1, "Bukayo Saka", "Forward", (short) 5, (short) 3, new BigDecimal("7.35"), (short) 8),
+                view(2, "Unknown Keeper", "Goalkeeper", null, null, null, (short) 1)
         ));
 
         List<PlayerDto> players = teamService.findPlayersByTeamAndSeason(ARSENAL_ID, SEASON_2024);
 
         assertThat(players).containsExactly(
-                new PlayerDto(1, "Bukayo Saka", "Forward", (short) 5, (short) 3, new BigDecimal("7.35")),
-                new PlayerDto(2, "Unknown Keeper", "Goalkeeper", null, null, null)
+                new PlayerDto(1, "Bukayo Saka", "Forward", (short) 5, (short) 3, new BigDecimal("7.35"), (short) 8),
+                new PlayerDto(2, "Unknown Keeper", "Goalkeeper", null, null, null, (short) 1)
         );
     }
 
@@ -132,7 +132,7 @@ class TeamServiceTest {
         verify(playerDao, never()).findByTeamIdAndSeason(any(), any());
     }
 
-    private static PlayerSeasonView view(Integer id, String name, String position, Short goals, Short assists, BigDecimal averageRating) {
+    private static PlayerSeasonView view(Integer id, String name, String position, Short goals, Short assists, BigDecimal averageRating, Short matchesPlayed) {
         return new PlayerSeasonView() {
             public Integer getId() { return id; }
             public String getName() { return name; }
@@ -140,6 +140,7 @@ class TeamServiceTest {
             public Short getGoals() { return goals; }
             public Short getAssists() { return assists; }
             public BigDecimal getAverageRating() { return averageRating; }
+            public Short getMatchesPlayed() { return matchesPlayed; }
         };
     }
 }
