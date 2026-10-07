@@ -1,13 +1,13 @@
 package com.takima.backskeleton.services;
 
 import com.takima.backskeleton.DAO.PlayerDao;
+import com.takima.backskeleton.DAO.PlayerSeasonView;
 import com.takima.backskeleton.DAO.SeasonDao;
 import com.takima.backskeleton.DAO.TeamDao;
 import com.takima.backskeleton.DTO.PlayerDto;
 import com.takima.backskeleton.DTO.SeasonDto;
 import com.takima.backskeleton.DTO.TeamDto;
 import com.takima.backskeleton.exceptions.TeamNotFoundException;
-import com.takima.backskeleton.models.Player;
 import com.takima.backskeleton.models.Season;
 import com.takima.backskeleton.models.Team;
 import org.springframework.stereotype.Service;
@@ -66,7 +66,7 @@ public class TeamService {
         return new SeasonDto(season.getStartYear(), season.getLabel());
     }
 
-    private PlayerDto toPlayerDto(Player player) {
-        return new PlayerDto(player.getId(), player.getName(), player.getPosition(), player.getHeightCm(), player.getWeightKg());
+    private PlayerDto toPlayerDto(PlayerSeasonView player) {
+        return new PlayerDto(player.getId(), player.getName(), player.getPosition(), player.getGoals(), player.getAssists(), player.getAverageRating());
     }
 }
