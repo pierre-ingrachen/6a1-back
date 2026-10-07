@@ -33,7 +33,7 @@ class PlayerControllerTest {
 
     @Test
     void searchPlayersReturnsOkWithMatchingPlayers() throws Exception {
-        when(playerService.searchPlayers("mba"))
+        when(playerService.searchPlayers(null, "mba"))
                 .thenReturn(List.of(new PlayerSearchResultDto(123, "Kylian Mbappé", "Forward", "Real Madrid", List.of(new PlayerSeasonTeamDto((short) 2025, "Real Madrid"), new PlayerSeasonTeamDto((short) 2024, "PSG")))));
 
         mockMvc.perform(get("/players/search").param("query", "mba"))
@@ -43,6 +43,17 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Kylian Mbappé"))
                 .andExpect(jsonPath("$[0].teamName").value("Real Madrid"))
                 .andExpect(jsonPath("$[0].seasons.length()").value(2));
+    }
+
+    @Test
+    void searchPlayersPassesOptionalSeasonToService() throws Exception {
+        when(playerService.searchPlayers(SEASON, "mba"))
+                .thenReturn(List.of(new PlayerSearchResultDto(123, "Kylian Mbappé", "Forward", "Real Madrid", List.of(new PlayerSeasonTeamDto(SEASON, "Real Madrid")))));
+
+        mockMvc.perform(get("/players/search").param("query", "mba").param("season", "2025"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].seasons[0].startYear").value(2025));
     }
 
     @Test
