@@ -212,10 +212,10 @@ class PlayerServiceTest {
                 appearance(3, "Erling Haaland", 2025, "Manchester City")
         );
 
-        assertThat(playerService.searchPlayers("MBAPPE"))
+        assertThat(playerService.searchPlayers(null, "MBAPPE"))
                 .extracting(PlayerSearchResultDto::name)
                 .containsExactly("Kylian Mbappé");
-        assertThat(playerService.searchPlayers("mb"))
+        assertThat(playerService.searchPlayers(null, "mb"))
                 .extracting(PlayerSearchResultDto::name)
                 .containsExactly("Bryan Mbeumo", "Kylian Mbappé");
     }
@@ -229,10 +229,28 @@ class PlayerServiceTest {
                 appearance(8, "Erling Haaland", 2025, "Manchester City")
         );
 
-        List<PlayerSearchResultDto> results = playerService.searchPlayers("ronaldo");
+        List<PlayerSearchResultDto> results = playerService.searchPlayers(null, "ronaldo");
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).teamName()).isEqualTo("Manchester United");
+        assertThat(results.get(0).seasons()).containsExactly(
+                new PlayerSeasonTeamDto((short) 2021, "Manchester United"),
+                new PlayerSeasonTeamDto((short) 2018, "Juventus"));
+    }
+
+    @Test
+    void searchPlayersWithSeasonKeepsOnlyPlayersOfThatSeasonWithTheirTeamThatSeason() {
+        givenAppearances(
+                appearance(7, "Cristiano Ronaldo", 2021, "Manchester United"),
+                appearance(7, "Cristiano Ronaldo", 2018, "Juventus"),
+                appearance(9, "Ronaldo Nazario", 2021, "Real Valladolid"),
+                appearance(10, "Ronaldo Retired", 2015, "Old Club")
+        );
+
+        List<PlayerSearchResultDto> results = playerService.searchPlayers((short) 2018, "ronaldo");
+
+        assertThat(results).extracting(PlayerSearchResultDto::name).containsExactly("Cristiano Ronaldo");
+        assertThat(results.get(0).teamName()).isEqualTo("Juventus");
         assertThat(results.get(0).seasons()).containsExactly(
                 new PlayerSeasonTeamDto((short) 2021, "Manchester United"),
                 new PlayerSeasonTeamDto((short) 2018, "Juventus"));
@@ -244,12 +262,12 @@ class PlayerServiceTest {
                 .mapToObj(id -> appearance(id, "Player " + id, 2025, "Team"))
                 .toArray(PlayerAppearance[]::new));
 
-        assertThat(playerService.searchPlayers("player")).hasSize(PlayerService.MAXIMUM_SEARCH_RESULTS);
+        assertThat(playerService.searchPlayers(null, "player")).hasSize(PlayerService.MAXIMUM_SEARCH_RESULTS);
     }
 
     @Test
     void searchPlayersReturnsNothingForTooShortQuery() {
-        assertThat(playerService.searchPlayers(" m ")).isEmpty();
+        assertThat(playerService.searchPlayers(null, " m ")).isEmpty();
         verify(playerSeasonStatsDao, never()).findAllAppearances();
     }
 
