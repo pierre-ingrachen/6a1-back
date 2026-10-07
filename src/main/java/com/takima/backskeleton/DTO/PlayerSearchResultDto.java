@@ -1,4 +1,6 @@
 package com.takima.backskeleton.DTO;
 
-public record PlayerSearchResultDto(Integer id, String name, String position, String teamName) {
+import java.util.List;
+
+public record PlayerSearchResultDto(Integer id, String name, String position, String teamName, List<PlayerSeasonTeamDto> seasons) {
 }
