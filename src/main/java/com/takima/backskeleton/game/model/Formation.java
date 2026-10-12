@@ -20,7 +20,14 @@ public enum Formation {
     FOUR_FOUR_TWO("4-4-2", GK, LB, CB, CB, RB, LW, CM, CM, RW, ST, ST),
     FOUR_TWO_THREE_ONE("4-2-3-1", GK, LB, CB, CB, RB, CM, CM, LW, AM, RW, ST),
     THREE_FIVE_TWO("3-5-2", GK, CB, CB, CB, LWB, RWB, CM, CM, CM, ST, ST),
-    FIVE_THREE_TWO("5-3-2", GK, LWB, CB, CB, CB, RWB, CM, CM, CM, ST, ST);
+    FIVE_THREE_TWO("5-3-2", GK, LWB, CB, CB, CB, RWB, CM, CM, CM, ST, ST),
+    FOUR_ONE_TWO_ONE_TWO("4-1-2-1-2", GK, LB, CB, CB, RB, CM, CM, CM, AM, ST, ST),
+    FOUR_THREE_TWO_ONE("4-3-2-1", GK, LB, CB, CB, RB, CM, CM, CM, AM, AM, ST),
+    FOUR_FOUR_ONE_ONE("4-4-1-1", GK, LB, CB, CB, RB, LW, CM, CM, RW, AM, ST),
+    FOUR_FIVE_ONE("4-5-1", GK, LB, CB, CB, RB, LW, CM, CM, CM, RW, ST),
+    THREE_FOUR_THREE("3-4-3", GK, CB, CB, CB, LWB, RWB, CM, CM, LW, ST, RW),
+    THREE_FOUR_TWO_ONE("3-4-2-1", GK, CB, CB, CB, LWB, RWB, CM, CM, AM, AM, ST),
+    FIVE_FOUR_ONE("5-4-1", GK, LWB, CB, CB, CB, RWB, LW, CM, CM, RW, ST);
 
     public static final int SQUAD_SIZE = 11;
 
