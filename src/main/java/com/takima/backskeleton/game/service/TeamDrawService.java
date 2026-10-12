@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamDrawService {
@@ -25,7 +27,7 @@ public class TeamDrawService {
     }
 
     public TeamSeason drawNext(Game game) {
-        return pickWeighted(game, candidates(game, teamSeason -> true))
+        return pickUniformlyByTeam(game, candidates(game, teamSeason -> true))
                 .orElseThrow(() -> new NoRedrawAvailableException("No team available to draw"));
     }
 
@@ -35,7 +37,7 @@ public class TeamDrawService {
             case SEASON -> teamSeason -> teamSeason.teamId() == current.teamId() && teamSeason.startYear() != current.startYear();
             case TEAM -> teamSeason -> teamSeason.startYear() == current.startYear() && teamSeason.teamId() != current.teamId();
         };
-        return pickWeighted(game, candidates(game, sameFamily))
+        return pickUniformlyByTeam(game, candidates(game, sameFamily))
                 .orElseThrow(() -> new NoRedrawAvailableException("No other " + type.name().toLowerCase() + " available to draw"));
     }
 
@@ -47,24 +49,16 @@ public class TeamDrawService {
                 .toList();
     }
 
-    private Optional<TeamSeason> pickWeighted(Game game, List<TeamSeason> candidates) {
+    private Optional<TeamSeason> pickUniformlyByTeam(Game game, List<TeamSeason> candidates) {
         if (candidates.isEmpty()) {
             return Optional.empty();
         }
         Random random = new Random(game.seed() + game.drawCount() * DRAW_SEED_STRIDE);
-        double totalWeight = candidates.stream().mapToDouble(this::weight).sum();
-        double target = random.nextDouble() * totalWeight;
-        double cumulated = 0;
-        for (TeamSeason candidate : candidates) {
-            cumulated += weight(candidate);
-            if (target < cumulated) {
-                return Optional.of(candidate);
-            }
-        }
-        return Optional.of(candidates.get(candidates.size() - 1));
-    }
-
-    private double weight(TeamSeason teamSeason) {
-        return 1 + GameBalance.DRAW_WEIGHT_PER_ROUND * teamSeason.roundReached().ordinal();
+        List<List<TeamSeason>> seasonsByTeam = candidates.stream()
+                .collect(Collectors.groupingBy(TeamSeason::teamId, TreeMap::new, Collectors.toList()))
+                .values().stream()
+                .toList();
+        List<TeamSeason> teamSeasons = seasonsByTeam.get(random.nextInt(seasonsByTeam.size()));
+        return Optional.of(teamSeasons.get(random.nextInt(teamSeasons.size())));
     }
 }
