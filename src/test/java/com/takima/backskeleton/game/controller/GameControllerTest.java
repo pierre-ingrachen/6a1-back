@@ -76,7 +76,7 @@ class GameControllerTest {
     void findAllFormationsReturnsTheFiveFormations() throws Exception {
         mockMvc.perform(get("/formations"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(12))
+                .andExpect(jsonPath("$.length()").value(5))
                 .andExpect(jsonPath("$[0].label").value("4-3-3"))
                 .andExpect(jsonPath("$[0].positions.length()").value(11));
     }
