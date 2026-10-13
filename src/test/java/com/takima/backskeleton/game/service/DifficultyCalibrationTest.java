@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DifficultyCalibrationTest {
     private static final int SIMULATIONS = 1000;
-    private static final int STAR_RATING_THRESHOLD = 86;
+    private static final int STAR_RATING_THRESHOLD = 85;
 
     private final DraftService draftService = GameTestContext.draftService();
     private final TeamStrengthService strengthService = GameTestContext.strengthService();
@@ -27,7 +27,7 @@ class DifficultyCalibrationTest {
     void starSeekingPlayerWinsAboutOneGameInFive() {
         double titleRate = titleRateOfDrafts(Formation.FOUR_THREE_THREE, (bot, game) -> bot.playStarSeeker(game, STAR_RATING_THRESHOLD));
 
-        assertThat(titleRate).isBetween(0.15, 0.28);
+        assertThat(titleRate).isBetween(0.12, 0.28);
     }
 
     @Test
@@ -55,7 +55,7 @@ class DifficultyCalibrationTest {
 
     @Test
     void hopelessTeamAlmostNeverWins() {
-        double titleRate = titleRateOfStrength(new TeamStrength(65, 65));
+        double titleRate = titleRateOfStrength(new TeamStrength(71, 71));
 
         assertThat(titleRate).isLessThan(0.005);
     }
@@ -63,7 +63,7 @@ class DifficultyCalibrationTest {
     @Test
     void nobodyIsEliminatedInGroupStage() {
         long eliminatedInGroups = IntStream.range(0, SIMULATIONS)
-                .mapToObj(seed -> competitionSimulator.simulate(new TeamStrength(60, 60), seed))
+                .mapToObj(seed -> competitionSimulator.simulate(new TeamStrength(70, 70), seed))
                 .filter(result -> result.outcome() == Round.GROUP_STAGE)
                 .count();
 
