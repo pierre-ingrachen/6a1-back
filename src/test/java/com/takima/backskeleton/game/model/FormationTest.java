@@ -47,6 +47,12 @@ class FormationTest {
     }
 
     @Test
+    void formationsAreSortedByNumberOfDefenders() {
+        assertThat(Arrays.stream(Formation.values()).map(formation -> Integer.parseInt(formation.label().split("-")[0])))
+                .isSortedAccordingTo((first, second) -> orderOfDefenders(first) - orderOfDefenders(second));
+    }
+
+    @Test
     void fourThreeThreeHasOneLeftWinger() {
         assertThat(Formation.FOUR_THREE_THREE.slots()).containsOnlyOnce(FieldPosition.LW);
     }
@@ -59,5 +65,13 @@ class FormationTest {
     @Test
     void unknownLabelIsRejected() {
         assertThatThrownBy(() -> Formation.fromLabel("9-0-1")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static int orderOfDefenders(int defenders) {
+        return switch (defenders) {
+            case 4 -> 0;
+            case 3 -> 1;
+            default -> 2;
+        };
     }
 }
