@@ -46,6 +46,21 @@ class PlayerControllerTest {
     }
 
     @Test
+    void searchPlayersRejectsTooLongQueries() throws Exception {
+        mockMvc.perform(get("/players/search").param("query", "a".repeat(101)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("query must be at most 100 characters"));
+    }
+
+    @Test
+    void searchPlayersAcceptsTheMaximumQueryLength() throws Exception {
+        when(playerService.searchPlayers(null, "a".repeat(100))).thenReturn(List.of());
+
+        mockMvc.perform(get("/players/search").param("query", "a".repeat(100)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void searchPlayersPassesOptionalSeasonToService() throws Exception {
         when(playerService.searchPlayers(SEASON, "mba"))
                 .thenReturn(List.of(new PlayerSearchResultDto(123, "Kylian Mbappé", "Forward", "Real Madrid", List.of(new PlayerSeasonTeamDto(SEASON, "Real Madrid")))));

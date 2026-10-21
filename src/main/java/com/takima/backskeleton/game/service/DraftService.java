@@ -66,9 +66,6 @@ public class DraftService {
     }
 
     public Game move(Game game, int fromSlot, int toSlot) {
-        if (game.isCompleted()) {
-            throw new DraftCompletedException(game.id());
-        }
         PickedPlayer moved = game.picks().get(fromSlot);
         if (moved == null) {
             throw new InvalidPickException("Slot " + fromSlot + " has no player to move");

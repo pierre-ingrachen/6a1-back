@@ -10,14 +10,16 @@ import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
 import com.takima.backskeleton.models.PlayerAppearance;
 import com.takima.backskeleton.models.PlayerSeasonStats;
 import com.takima.backskeleton.models.Stat;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,8 +41,17 @@ class PlayerServiceTest {
     @Mock
     private PlayerSeasonStatsDao playerSeasonStatsDao;
 
-    @InjectMocks
     private PlayerService playerService;
+
+    @BeforeEach
+    void setUp() {
+        Clock clock = Clock.systemUTC();
+        PercentileCalculator calculator = new PercentileCalculator();
+        playerService = new PlayerService(
+                new PlayerSearchIndex(playerSeasonStatsDao, clock, Duration.ofHours(1)),
+                new SeasonStatsCache(playerSeasonStatsDao, calculator, clock, Duration.ofHours(1)),
+                calculator);
+    }
 
     @Test
     void findPlayerStatsKeepsTeamEliminatedInGroupStageAsFirstTeam() {
@@ -130,8 +142,36 @@ class PlayerServiceTest {
     }
 
     @Test
+    void findPlayerStatsTreatsBarragesAsGroupStageElimination() {
+        givenSeasonRows(
+                stint(TARGET_ID, "Late Club", "Quarts de finale", 7, 630, 5),
+                stint(TARGET_ID, "Playoff Club", "Barrages", 4, 360, 1)
+        );
+
+        PlayerStatsDto stats = playerService.findPlayerStats(TARGET_ID, SEASON);
+
+        assertThat(stats.teamName()).isEqualTo("Playoff Club");
+        assertThat(stats.teamEstimated()).isFalse();
+    }
+
+    @Test
+    void evictCachesForcesTheNextCallsToReloadFromTheDao() {
+        givenAppearances(appearance(1, "Kylian Mbappé", 2025, "Real Madrid"));
+        givenSeasonRows(player(TARGET_ID, "Forward", 900));
+        playerService.searchPlayers(null, "mbappe");
+        playerService.findPlayerStats(TARGET_ID, SEASON);
+
+        playerService.evictCaches();
+        playerService.searchPlayers(null, "mbappe");
+        playerService.findPlayerStats(TARGET_ID, SEASON);
+
+        verify(playerSeasonStatsDao, times(2)).findAllAppearances();
+        verify(playerSeasonStatsDao, times(2)).findBySeason(SEASON);
+    }
+
+    @Test
     void findPlayerStatsExcludesPlayersBelowMinutesThresholdFromPopulation() {
-        int belowThreshold = PlayerService.MINIMUM_MINUTES_FOR_PERCENTILES - 1;
+        int belowThreshold = PercentileCalculator.MINIMUM_MINUTES_FOR_PERCENTILES - 1;
         givenSeasonRows(
                 player(TARGET_ID, "Forward", 100, "buts", 5),
                 player(2, "Forward", 900, "buts", 2),
@@ -269,6 +309,39 @@ class PlayerServiceTest {
     void searchPlayersReturnsNothingForTooShortQuery() {
         assertThat(playerService.searchPlayers(null, " m ")).isEmpty();
         verify(playerSeasonStatsDao, never()).findAllAppearances();
+    }
+
+    @Test
+    void searchPlayersLoadsAppearancesOnlyOnce() {
+        givenAppearances(appearance(1, "Kylian Mbappé", 2025, "Real Madrid"));
+
+        playerService.searchPlayers(null, "mbappe");
+        playerService.searchPlayers(null, "kylian");
+
+        verify(playerSeasonStatsDao, times(1)).findAllAppearances();
+    }
+
+    @Test
+    void findPlayerStatsLoadsSeasonOnlyOnce() {
+        givenSeasonRows(player(TARGET_ID, "Forward", 900, "buts", 5), player(2, "Forward", 900, "buts", 2));
+
+        PlayerStatsDto first = playerService.findPlayerStats(TARGET_ID, SEASON);
+        PlayerStatsDto second = playerService.findPlayerStats(2, SEASON);
+
+        assertThat(first.id()).isEqualTo(TARGET_ID);
+        assertThat(second.id()).isEqualTo(2);
+        verify(playerSeasonStatsDao, times(1)).findBySeason(SEASON);
+    }
+
+    @Test
+    void findPlayerStatsDoesNotCacheEmptySeasons() {
+        when(playerSeasonStatsDao.findBySeason(SEASON)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> playerService.findPlayerStats(TARGET_ID, SEASON))
+                .isInstanceOf(PlayerStatsNotFoundException.class);
+        givenSeasonRows(player(TARGET_ID, "Forward", 900));
+
+        assertThat(playerService.findPlayerStats(TARGET_ID, SEASON).id()).isEqualTo(TARGET_ID);
     }
 
     private void givenAppearances(PlayerAppearance... appearances) {

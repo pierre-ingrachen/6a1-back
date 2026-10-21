@@ -1,6 +1,7 @@
 package com.takima.backskeleton.game.model;
 
 import java.util.List;
+import java.util.Set;
 
 public enum Round {
     GROUP_STAGE,
@@ -12,12 +13,20 @@ public enum Round {
 
     public static final List<Round> KNOCKOUT_ROUNDS = List.of(ROUND_OF_16, QUARTER_FINAL, SEMI_FINAL, FINAL);
 
+    private static final Set<String> GROUP_STAGE_LABELS = Set.of("Phase de groupes", "Phase de ligue", "Barrages");
+
+    public static boolean isGroupStageLabel(String label) {
+        return label != null && GROUP_STAGE_LABELS.contains(label.trim());
+    }
+
     public static Round fromDatabase(String lastRoundPlayed, boolean winner) {
         if (winner) {
             return WINNER;
         }
+        if (isGroupStageLabel(lastRoundPlayed)) {
+            return GROUP_STAGE;
+        }
         return switch (lastRoundPlayed.trim()) {
-            case "Phase de groupes", "Phase de ligue", "Barrages" -> GROUP_STAGE;
             case "Huitièmes de finale" -> ROUND_OF_16;
             case "Quarts de finale" -> QUARTER_FINAL;
             case "Demi-finales" -> SEMI_FINAL;

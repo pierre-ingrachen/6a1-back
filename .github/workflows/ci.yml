@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Garde de règles
+        run: bash .githooks/run-guard.sh --all
+      - name: Build et tests (Testcontainers, Docker requis)
+        run: ./mvnw -B verify

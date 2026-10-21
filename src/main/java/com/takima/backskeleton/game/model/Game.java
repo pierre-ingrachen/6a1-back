@@ -16,21 +16,16 @@ public record Game(
         Map<Integer, PickedPlayer> picks,
         Set<TeamSeasonKey> seenDraws,
         int redrawsLeft,
-        int drawCount,
-        CompetitionResult result
+        int drawCount
 ) {
     public static final int INITIAL_REDRAWS = 3;
 
     public static Game create(UUID id, long seed, Formation formation) {
-        return new Game(id, seed, formation, null, Map.of(), Set.of(), INITIAL_REDRAWS, 0, null);
+        return new Game(id, seed, formation, null, Map.of(), Set.of(), INITIAL_REDRAWS, 0);
     }
 
     public boolean isDraftComplete() {
         return picks.size() == Formation.SQUAD_SIZE;
-    }
-
-    public boolean isCompleted() {
-        return result != null;
     }
 
     public int picksRemaining() {
@@ -51,17 +46,17 @@ public record Game(
     public Game withDraw(TeamSeasonKey draw) {
         Set<TeamSeasonKey> seen = new HashSet<>(seenDraws);
         seen.add(draw);
-        return new Game(id, seed, formation, draw, picks, Set.copyOf(seen), redrawsLeft, drawCount + 1, result);
+        return new Game(id, seed, formation, draw, picks, Set.copyOf(seen), redrawsLeft, drawCount + 1);
     }
 
     public Game withRedrawUsed() {
-        return new Game(id, seed, formation, currentDraw, picks, seenDraws, redrawsLeft - 1, drawCount, result);
+        return new Game(id, seed, formation, currentDraw, picks, seenDraws, redrawsLeft - 1, drawCount);
     }
 
     public Game withPick(int slotIndex, PickedPlayer player) {
         Map<Integer, PickedPlayer> updated = new HashMap<>(picks);
         updated.put(slotIndex, player);
-        return new Game(id, seed, formation, currentDraw, Map.copyOf(updated), seenDraws, redrawsLeft, drawCount, result);
+        return new Game(id, seed, formation, currentDraw, Map.copyOf(updated), seenDraws, redrawsLeft, drawCount);
     }
 
     public Game withMove(int fromSlot, int toSlot) {
@@ -71,14 +66,10 @@ public record Game(
         if (displaced != null) {
             updated.put(fromSlot, displaced);
         }
-        return new Game(id, seed, formation, currentDraw, Map.copyOf(updated), seenDraws, redrawsLeft, drawCount, result);
+        return new Game(id, seed, formation, currentDraw, Map.copyOf(updated), seenDraws, redrawsLeft, drawCount);
     }
 
     public Game withoutDraw() {
-        return new Game(id, seed, formation, null, picks, seenDraws, redrawsLeft, drawCount, result);
-    }
-
-    public Game withResult(CompetitionResult competitionResult) {
-        return new Game(id, seed, formation, currentDraw, picks, seenDraws, redrawsLeft, drawCount, competitionResult);
+        return new Game(id, seed, formation, null, picks, seenDraws, redrawsLeft, drawCount);
     }
 }

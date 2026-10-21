@@ -29,7 +29,7 @@ public class GameViewMapper {
         return new GameView(
                 game.id(),
                 game.formation().label(),
-                statusOf(game),
+                game.isDraftComplete() ? GameStatus.READY_TO_SIMULATE : GameStatus.DRAFTING,
                 game.picksRemaining(),
                 game.redrawsLeft(),
                 averageRating(game),
@@ -39,13 +39,6 @@ public class GameViewMapper {
 
     public FormationDto toDto(Formation formation) {
         return new FormationDto(formation.label(), formation.slots().stream().map(FieldPosition::name).toList());
-    }
-
-    private GameStatus statusOf(Game game) {
-        if (game.isCompleted()) {
-            return GameStatus.COMPLETED;
-        }
-        return game.isDraftComplete() ? GameStatus.READY_TO_SIMULATE : GameStatus.DRAFTING;
     }
 
     private Double averageRating(Game game) {

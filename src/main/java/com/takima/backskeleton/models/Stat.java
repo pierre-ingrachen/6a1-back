@@ -2,7 +2,11 @@ package com.takima.backskeleton.models;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.takima.backskeleton.models.StatCategory.AERIAL_DUELS;
 import static com.takima.backskeleton.models.StatCategory.CREATION;
@@ -172,11 +176,22 @@ public enum Stat {
                 .toList();
     }
 
+    private static final List<String> COLUMNS = Arrays.stream(values())
+            .map(stat -> stat.column)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+    private static final Map<String, Integer> COLUMN_INDEXES = IntStream.range(0, COLUMNS.size())
+            .boxed()
+            .collect(Collectors.toUnmodifiableMap(COLUMNS::get, Function.identity()));
+
     public static List<String> columns() {
-        return Arrays.stream(values())
-                .map(stat -> stat.column)
-                .filter(Objects::nonNull)
-                .toList();
+        return COLUMNS;
+    }
+
+    public static int columnIndex(String column) {
+        return COLUMN_INDEXES.getOrDefault(column, -1);
     }
 
     public boolean isRatio() {
