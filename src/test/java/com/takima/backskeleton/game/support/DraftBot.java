@@ -32,7 +32,6 @@ public final class DraftBot {
                     current = draftService.redraw(current, randomRedrawType());
                     continue;
                 } catch (NoRedrawAvailableException exception) {
-                    // no alternative available, keep the current draw
                 }
             }
             SeasonPlayer best = options.stream().max(Comparator.comparingInt(SeasonPlayer::rating)).orElseThrow();

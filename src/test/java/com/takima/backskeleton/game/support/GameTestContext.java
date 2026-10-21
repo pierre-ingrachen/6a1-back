@@ -1,9 +1,11 @@
 package com.takima.backskeleton.game.support;
 
+import com.takima.backskeleton.game.dao.GameRepository;
 import com.takima.backskeleton.game.dao.InMemoryGameRepository;
 import com.takima.backskeleton.game.service.CompetitionSimulator;
 import com.takima.backskeleton.game.service.DraftEligibility;
 import com.takima.backskeleton.game.service.DraftService;
+import com.takima.backskeleton.game.service.GameLocks;
 import com.takima.backskeleton.game.service.GameService;
 import com.takima.backskeleton.game.service.MatchSimulator;
 import com.takima.backskeleton.game.service.TeamDrawService;
@@ -17,6 +19,8 @@ public final class GameTestContext {
     private static final TeamSeasonCatalog CATALOG = new TeamSeasonCatalog(new TsvTeamSeasonSource(), STRENGTH_SERVICE);
     private static final DraftEligibility ELIGIBILITY = new DraftEligibility();
     private static final MatchSimulator MATCH_SIMULATOR = new MatchSimulator();
+
+    private static final int DEFAULT_MAX_ACTIVE_GAMES = 1000;
 
     private GameTestContext() {
     }
@@ -50,8 +54,25 @@ public final class GameTestContext {
     }
 
     public static GameService gameService(long firstSeed) {
+        return gameService(firstSeed, new InMemoryGameRepository());
+    }
+
+    public static GameService gameService(long firstSeed, GameRepository gameRepository) {
+        return gameService(firstSeed, gameRepository, new GameLocks());
+    }
+
+    public static GameService gameService(long firstSeed, GameRepository gameRepository, GameLocks gameLocks) {
+        return gameService(firstSeed, gameRepository, gameLocks, DEFAULT_MAX_ACTIVE_GAMES);
+    }
+
+    public static GameService gameService(long firstSeed, GameRepository gameRepository, int maxActiveGames) {
+        return gameService(firstSeed, gameRepository, new GameLocks(), maxActiveGames);
+    }
+
+    public static GameService gameService(long firstSeed, GameRepository gameRepository, GameLocks gameLocks,
+                                          int maxActiveGames) {
         AtomicLong seeds = new AtomicLong(firstSeed);
-        return new GameService(new InMemoryGameRepository(), draftService(), STRENGTH_SERVICE,
-                competitionSimulator(), seeds::getAndIncrement);
+        return new GameService(gameRepository, draftService(), STRENGTH_SERVICE,
+                competitionSimulator(), gameLocks, maxActiveGames, seeds::getAndIncrement);
     }
 }

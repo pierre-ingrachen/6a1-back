@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+TOP="$(git rev-parse --show-toplevel)"
+exec "$TOP/.githooks/run-guard.sh"

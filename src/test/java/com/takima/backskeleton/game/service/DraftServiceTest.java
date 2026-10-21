@@ -280,15 +280,6 @@ class DraftServiceTest {
     }
 
     @Test
-    void moveIsRejectedOnceTheCompetitionIsSimulated() {
-        Game simulated = GameTestContext.gameService(3L).create("4-4-2");
-        Game game = simulated.withResult(GameTestContext.competitionSimulator()
-                .simulate(new TeamStrength(80, 80), 1L));
-
-        assertThatThrownBy(() -> draftService.move(game, 0, 1)).isInstanceOf(DraftCompletedException.class);
-    }
-
-    @Test
     void movedDraftStillOffersAPickablePlayer() {
         Game game = gameWithOnePick(Formation.FOUR_TWO_THREE_ONE);
         int from = game.picks().keySet().iterator().next();

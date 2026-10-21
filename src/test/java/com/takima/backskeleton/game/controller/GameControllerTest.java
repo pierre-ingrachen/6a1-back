@@ -1,6 +1,7 @@
 package com.takima.backskeleton.game.controller;
 
 import com.takima.backskeleton.game.exception.DraftIncompleteException;
+import com.takima.backskeleton.game.exception.GameCapacityReachedException;
 import com.takima.backskeleton.game.exception.GameNotFoundException;
 import com.takima.backskeleton.game.exception.InvalidPickException;
 import com.takima.backskeleton.game.exception.NoRedrawAvailableException;
@@ -19,6 +20,8 @@ import com.takima.backskeleton.game.service.TeamSeasonCatalog;
 import com.takima.backskeleton.game.support.GameTestContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -32,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -100,7 +103,17 @@ class GameControllerTest {
         when(gameService.create("9-9-9")).thenThrow(new UnknownFormationException("9-9-9"));
 
         mockMvc.perform(post("/games").contentType(MediaType.APPLICATION_JSON).content("{\"formation\":\"9-9-9\"}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Unknown formation 9-9-9"));
+    }
+
+    @Test
+    void createGameReturnsServiceUnavailableWhenCapacityIsReached() throws Exception {
+        when(gameService.create("4-3-3")).thenThrow(new GameCapacityReachedException(1000));
+
+        mockMvc.perform(post("/games").contentType(MediaType.APPLICATION_JSON).content("{\"formation\":\"4-3-3\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
     @Test
@@ -141,7 +154,7 @@ class GameControllerTest {
 
     @Test
     void pickPlayerReturnsBadRequestWhenInvalid() throws Exception {
-        when(gameService.pick(eq(game.id()), any(), any())).thenThrow(new InvalidPickException("nope"));
+        when(gameService.pick(eq(game.id()), anyInt(), anyInt())).thenThrow(new InvalidPickException("nope"));
 
         mockMvc.perform(post("/games/" + game.id() + "/picks").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"playerId\":7,\"slotIndex\":3}"))
@@ -159,7 +172,7 @@ class GameControllerTest {
 
     @Test
     void movePlayerReturnsBadRequestWhenInvalid() throws Exception {
-        when(gameService.move(eq(game.id()), any(), any())).thenThrow(new InvalidPickException("nope"));
+        when(gameService.move(eq(game.id()), anyInt(), anyInt())).thenThrow(new InvalidPickException("nope"));
 
         mockMvc.perform(post("/games/" + game.id() + "/moves").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fromSlot\":2,\"toSlot\":4}"))
@@ -202,13 +215,38 @@ class GameControllerTest {
     void simulationReturnsTheCompetitionResult() throws Exception {
         CompetitionResult result = new CompetitionResult(
                 new TeamStrength(80, 78), new GroupStageResult(List.of(), List.of(), 2), List.of(), Round.SEMI_FINAL, false);
-        when(gameService.simulate(game.id())).thenReturn(game.withResult(result));
+        when(gameService.simulate(game.id())).thenReturn(result);
 
         mockMvc.perform(post("/games/" + game.id() + "/simulation"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.outcome").value("SEMI_FINAL"))
                 .andExpect(jsonPath("$.champion").value(false))
                 .andExpect(jsonPath("$.groupStage.rank").value(2));
+    }
+
+    @Test
+    void simulationReturnsNotFoundWhenGameIsGone() throws Exception {
+        when(gameService.simulate(UNKNOWN_GAME_ID)).thenThrow(new GameNotFoundException(UNKNOWN_GAME_ID));
+
+        mockMvc.perform(post("/games/" + UNKNOWN_GAME_ID + "/simulation")).andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            /games|{}|formation is required
+            /games|{"formation":""}|formation is required
+            /games|{"formation":"   "}|formation is required
+            /games|{"formation":"123456789012345678901"}|formation must be at most 20 characters
+            /games/%s/picks|{"slotIndex":3}|playerId is required
+            /games/%s/picks|{"playerId":7}|slotIndex is required
+            /games/%s/moves|{"toSlot":3}|fromSlot is required
+            /games/%s/moves|{"fromSlot":3}|toSlot is required
+            /games/%s/redraws|{}|type is required
+            """)
+    void invalidRequestBodiesReturnBadRequestWithTheViolation(String pathTemplate, String body, String message) throws Exception {
+        mockMvc.perform(post(pathTemplate.formatted(game.id())).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(message));
     }
 
     @Test
