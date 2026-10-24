@@ -26,12 +26,12 @@ public class PlayerController {
     }
 
     @GetMapping("/search")
-    public List<PlayerSearchResultDto> searchPlayers(@RequestParam @Size(max = MAXIMUM_QUERY_LENGTH, message = "query must be at most 100 characters") String query, @RequestParam(required = false) Short season) {
+    public List<PlayerSearchResultDto> searchPlayers(@RequestParam @Size(max = MAXIMUM_QUERY_LENGTH, message = "query must be at most 100 characters") String query, @RequestParam(required = false) @SeasonYear Short season) {
         return playerService.searchPlayers(season, query);
     }
 
     @GetMapping("/{playerId}/stats")
-    public PlayerStatsDto findPlayerStats(@PathVariable Integer playerId, @RequestParam Short season) {
+    public PlayerStatsDto findPlayerStats(@PathVariable Integer playerId, @RequestParam @SeasonYear Short season) {
         return playerService.findPlayerStats(playerId, season);
     }
 }

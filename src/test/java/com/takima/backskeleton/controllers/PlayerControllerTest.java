@@ -9,6 +9,8 @@ import com.takima.backskeleton.DTO.StatValueDto;
 import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
 import com.takima.backskeleton.services.PlayerService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -43,6 +45,31 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Kylian Mbappé"))
                 .andExpect(jsonPath("$[0].teamName").value("Real Madrid"))
                 .andExpect(jsonPath("$[0].seasons.length()").value(2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1900", "2100"})
+    void searchPlayersAcceptsTheSeasonBounds(String season) throws Exception {
+        when(playerService.searchPlayers(Short.valueOf(season), "mba")).thenReturn(List.of());
+
+        mockMvc.perform(get("/players/search").param("query", "mba").param("season", season))
+                .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1899", "2101", "0", "-5"})
+    void searchPlayersRejectsSeasonsOutOfRange(String season) throws Exception {
+        mockMvc.perform(get("/players/search").param("query", "mba").param("season", season))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("season must be between 1900 and 2100"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1899", "2101"})
+    void findPlayerStatsRejectsSeasonsOutOfRange(String season) throws Exception {
+        mockMvc.perform(get("/players/123/stats").param("season", season))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("season must be between 1900 and 2100"));
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.takima.backskeleton.DTO.PlayerDto;
 import com.takima.backskeleton.DTO.SeasonDto;
 import com.takima.backskeleton.DTO.TeamDto;
 import com.takima.backskeleton.services.TeamService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Validated
 @RequestMapping("teams")
 @RestController
 public class TeamController {
@@ -37,7 +39,7 @@ public class TeamController {
     }
 
     @GetMapping("/{teamId}/players")
-    public List<PlayerDto> findPlayersByTeamAndSeason(@PathVariable Integer teamId, @RequestParam Short season) {
+    public List<PlayerDto> findPlayersByTeamAndSeason(@PathVariable Integer teamId, @RequestParam @SeasonYear Short season) {
         return teamService.findPlayersByTeamAndSeason(teamId, season);
     }
 }
