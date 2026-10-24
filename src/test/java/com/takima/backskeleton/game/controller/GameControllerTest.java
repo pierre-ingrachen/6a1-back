@@ -14,6 +14,8 @@ import com.takima.backskeleton.game.model.RedrawType;
 import com.takima.backskeleton.game.model.Round;
 import com.takima.backskeleton.game.model.TeamStrength;
 import com.takima.backskeleton.game.service.DraftEligibility;
+import com.takima.backskeleton.game.exception.GameCreationRateLimitedException;
+import com.takima.backskeleton.game.service.GameCreationRateLimiter;
 import com.takima.backskeleton.game.service.GameService;
 import com.takima.backskeleton.game.service.GameViewMapper;
 import com.takima.backskeleton.game.service.TeamSeasonCatalog;
@@ -35,8 +37,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -67,6 +73,9 @@ class GameControllerTest {
 
     @MockBean
     private GameService gameService;
+
+    @MockBean
+    private GameCreationRateLimiter gameCreationRateLimiter;
 
     private Game game;
 
@@ -114,6 +123,28 @@ class GameControllerTest {
         mockMvc.perform(post("/games").contentType(MediaType.APPLICATION_JSON).content("{\"formation\":\"4-3-3\"}"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void createGameReturnsTooManyRequestsWhenTheClientIsRateLimited() throws Exception {
+        doThrow(new GameCreationRateLimitedException()).when(gameCreationRateLimiter).acquire(any());
+
+        mockMvc.perform(post("/games").contentType(MediaType.APPLICATION_JSON).content("{\"formation\":\"4-3-3\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.message").value("Too many game creations, try again later"));
+        verifyNoInteractions(gameService);
+    }
+
+    @Test
+    void createGameRateLimitsOnTheClientAddress() throws Exception {
+        when(gameService.create("4-3-3")).thenReturn(game);
+
+        mockMvc.perform(post("/games").with(request -> {
+                    request.setRemoteAddr("203.0.113.7");
+                    return request;
+                }).contentType(MediaType.APPLICATION_JSON).content("{\"formation\":\"4-3-3\"}"))
+                .andExpect(status().isCreated());
+        verify(gameCreationRateLimiter).acquire("203.0.113.7");
     }
 
     @Test

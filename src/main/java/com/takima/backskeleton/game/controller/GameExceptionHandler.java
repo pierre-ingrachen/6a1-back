@@ -4,6 +4,7 @@ import com.takima.backskeleton.exceptions.ErrorResponse;
 import com.takima.backskeleton.game.exception.DraftCompletedException;
 import com.takima.backskeleton.game.exception.DraftIncompleteException;
 import com.takima.backskeleton.game.exception.GameCapacityReachedException;
+import com.takima.backskeleton.game.exception.GameCreationRateLimitedException;
 import com.takima.backskeleton.game.exception.GameNotFoundException;
 import com.takima.backskeleton.game.exception.InvalidPickException;
 import com.takima.backskeleton.game.exception.InvalidRequestException;
@@ -27,6 +28,11 @@ public class GameExceptionHandler {
     @ExceptionHandler(GameCapacityReachedException.class)
     public ResponseEntity<ErrorResponse> handleCapacityReached(GameCapacityReachedException exception) {
         return toResponse(HttpStatus.SERVICE_UNAVAILABLE, exception);
+    }
+
+    @ExceptionHandler(GameCreationRateLimitedException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimited(GameCreationRateLimitedException exception) {
+        return toResponse(HttpStatus.TOO_MANY_REQUESTS, exception);
     }
 
     @ExceptionHandler({InvalidPickException.class, InvalidRequestException.class, UnknownFormationException.class})
