@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public interface GameRepository {
     Game save(Game game);
@@ -16,5 +17,9 @@ public interface GameRepository {
 
     int count();
 
-    List<UUID> deleteIdleFor(Duration idleDuration);
+    List<UUID> deleteIdleFor(Duration idleDuration, Predicate<Game> filter);
+
+    default List<UUID> deleteIdleFor(Duration idleDuration) {
+        return deleteIdleFor(idleDuration, game -> true);
+    }
 }

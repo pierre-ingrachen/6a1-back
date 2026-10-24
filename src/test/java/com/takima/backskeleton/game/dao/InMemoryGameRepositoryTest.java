@@ -38,6 +38,18 @@ class InMemoryGameRepositoryTest {
     }
 
     @Test
+    void onlyIdleGamesMatchingTheFilterAreDeleted() {
+        Game kept = repository.save(newGame());
+        Game removed = repository.save(newGame());
+        clock.advance(TTL.plusMinutes(1));
+
+        assertThat(repository.deleteIdleFor(TTL, game -> game.id().equals(removed.id()))).containsExactly(removed.id());
+
+        assertThat(repository.findById(kept.id())).contains(kept);
+        assertThat(repository.findById(removed.id())).isEmpty();
+    }
+
+    @Test
     void readingAGameKeepsItAlive() {
         Game game = repository.save(newGame());
         clock.advance(TTL.minusMinutes(1));

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
@@ -57,11 +58,11 @@ public class InMemoryGameRepository implements GameRepository {
     }
 
     @Override
-    public List<UUID> deleteIdleFor(Duration idleDuration) {
+    public List<UUID> deleteIdleFor(Duration idleDuration, Predicate<Game> filter) {
         Instant threshold = clock.instant().minus(idleDuration);
         List<UUID> deletedIds = new ArrayList<>();
         games.keySet().forEach(id -> games.computeIfPresent(id, (key, stored) -> {
-            if (stored.lastAccess().isBefore(threshold)) {
+            if (stored.lastAccess().isBefore(threshold) && filter.test(stored.game())) {
                 deletedIds.add(key);
                 return null;
             }

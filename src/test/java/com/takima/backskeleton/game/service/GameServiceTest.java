@@ -106,6 +106,61 @@ class GameServiceTest {
     }
 
     @Test
+    void gamesWithoutAnyPickAreRemovedAfterTheShortTtl() {
+        MutableClock clock = new MutableClock();
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(clock));
+        Game empty = service.create("4-3-3");
+        clock.advance(GameService.EMPTY_GAME_IDLE_TTL.plusMinutes(1));
+
+        service.removeIdleGames();
+
+        assertThatThrownBy(() -> service.get(empty.id())).isInstanceOf(GameNotFoundException.class);
+    }
+
+    @Test
+    void gamesWithoutAnyPickSurviveBeforeTheShortTtl() {
+        MutableClock clock = new MutableClock();
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(clock));
+        Game empty = service.create("4-3-3");
+        clock.advance(GameService.EMPTY_GAME_IDLE_TTL.minusMinutes(1));
+
+        service.removeIdleGames();
+
+        assertThat(service.get(empty.id())).isEqualTo(empty);
+    }
+
+    @Test
+    void gamesWithAPickKeepTheLongTtl() {
+        MutableClock clock = new MutableClock();
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(clock));
+        Game created = service.create("4-3-3");
+        SeasonPlayer player = bestPickable(created);
+        Game started = service.pick(created.id(), player.playerId(), eligibility.eligibleSlots(created, player).get(0));
+        clock.advance(GameService.EMPTY_GAME_IDLE_TTL.plusMinutes(1));
+
+        service.removeIdleGames();
+
+        assertThat(service.get(started.id())).isEqualTo(started);
+        clock.advance(GameService.GAME_IDLE_TTL.plusMinutes(1));
+        service.removeIdleGames();
+        assertThatThrownBy(() -> service.get(started.id())).isInstanceOf(GameNotFoundException.class);
+    }
+
+    @Test
+    void emptyGamesPurgeReleasesTheGameLock() {
+        MutableClock clock = new MutableClock();
+        GameLocks locks = new GameLocks();
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(clock), locks);
+        Game game = service.create("4-3-3");
+        service.redraw(game.id(), RedrawType.TEAM);
+        clock.advance(GameService.EMPTY_GAME_IDLE_TTL.plusMinutes(1));
+
+        service.removeIdleGames();
+
+        assertThat(locks.size()).isZero();
+    }
+
+    @Test
     void simulationReleasesTheGameLock() {
         GameLocks locks = new GameLocks();
         GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), locks);
