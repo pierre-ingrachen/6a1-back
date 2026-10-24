@@ -6,6 +6,8 @@ import com.takima.backskeleton.DTO.TeamDto;
 import com.takima.backskeleton.exceptions.TeamNotFoundException;
 import com.takima.backskeleton.services.TeamService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -122,6 +124,23 @@ class TeamControllerTest {
 
         mockMvc.perform(get("/teams/" + UNKNOWN_TEAM_ID + "/players").param("season", "2024"))
                 .andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1900", "2100"})
+    void findPlayersByTeamAndSeasonAcceptsTheSeasonBounds(String season) throws Exception {
+        when(teamService.findPlayersByTeamAndSeason(13, Short.valueOf(season))).thenReturn(List.of());
+
+        mockMvc.perform(get("/teams/13/players").param("season", season))
+                .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1899", "2101"})
+    void findPlayersByTeamAndSeasonRejectsSeasonsOutOfRange(String season) throws Exception {
+        mockMvc.perform(get("/teams/13/players").param("season", season))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("season must be between 1900 and 2100"));
     }
 
     @Test

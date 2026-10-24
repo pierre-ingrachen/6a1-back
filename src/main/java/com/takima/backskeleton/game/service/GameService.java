@@ -19,10 +19,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.function.LongSupplier;
+import java.util.stream.Stream;
 
 @Service
 public class GameService {
     static final Duration GAME_IDLE_TTL = Duration.ofHours(2);
+    static final Duration EMPTY_GAME_IDLE_TTL = Duration.ofMinutes(15);
     private static final long SIMULATION_SEED_SALT = 0x9E3779B97F4A7C15L;
 
     private final GameRepository gameRepository;
@@ -94,7 +96,10 @@ public class GameService {
     }
 
     public void removeIdleGames() {
-        gameRepository.deleteIdleFor(GAME_IDLE_TTL).forEach(gameLocks::release);
+        Stream.concat(
+                        gameRepository.deleteIdleFor(EMPTY_GAME_IDLE_TTL, game -> game.picks().isEmpty()).stream(),
+                        gameRepository.deleteIdleFor(GAME_IDLE_TTL).stream())
+                .forEach(gameLocks::release);
     }
 
     private Game update(UUID gameId, UnaryOperator<Game> change) {

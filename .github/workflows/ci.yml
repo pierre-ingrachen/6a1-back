@@ -16,5 +16,9 @@ jobs:
           cache: maven
       - name: Garde de règles
         run: bash .githooks/run-guard.sh --all
+      - name: Docker disponible (requis par les tests Testcontainers)
+        run: docker info > /dev/null
       - name: Build et tests (Testcontainers, Docker requis)
         run: ./mvnw -B verify
+      - name: Aucun test ignoré
+        run: "test -n \"$(ls target/surefire-reports/*.xml)\" && ! grep -lE 'skipped=\"[1-9]' target/surefire-reports/*.xml"

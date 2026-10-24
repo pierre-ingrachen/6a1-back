@@ -8,6 +8,8 @@ import com.takima.backskeleton.game.dto.RedrawRequest;
 import com.takima.backskeleton.game.model.CompetitionResult;
 import com.takima.backskeleton.game.service.GameService;
 import com.takima.backskeleton.game.service.GameViewMapper;
+import com.takima.backskeleton.game.service.GameCreationRateLimiter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,15 +27,19 @@ import java.util.UUID;
 public class GameController {
     private final GameService gameService;
     private final GameViewMapper gameViewMapper;
+    private final GameCreationRateLimiter gameCreationRateLimiter;
 
-    public GameController(GameService gameService, GameViewMapper gameViewMapper) {
+    public GameController(GameService gameService, GameViewMapper gameViewMapper,
+                          GameCreationRateLimiter gameCreationRateLimiter) {
         this.gameService = gameService;
         this.gameViewMapper = gameViewMapper;
+        this.gameCreationRateLimiter = gameCreationRateLimiter;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public GameView createGame(@Valid @RequestBody CreateGameRequest request) {
+    public GameView createGame(@Valid @RequestBody CreateGameRequest request, HttpServletRequest httpRequest) {
+        gameCreationRateLimiter.acquire(httpRequest.getRemoteAddr());
         return gameViewMapper.toView(gameService.create(request.formation()));
     }
 
