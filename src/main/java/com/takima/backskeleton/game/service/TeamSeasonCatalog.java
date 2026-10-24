@@ -7,11 +7,9 @@ import com.takima.backskeleton.game.model.TeamSeason;
 import com.takima.backskeleton.game.model.TeamSeasonKey;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -62,27 +60,20 @@ public class TeamSeasonCatalog {
         List<Opponent> opponents = teamSeasons.stream()
                 .map(teamSeason -> new Opponent(teamSeason, strengthService.ofOpponent(teamSeason)))
                 .toList();
-        return new Content(teamSeasons, byKey, opponents, selectDrawable(opponents));
+        return new Content(teamSeasons, byKey, opponents, selectDrawable(teamSeasons));
     }
 
-    private List<TeamSeason> selectDrawable(List<Opponent> opponents) {
-        Set<TeamSeasonKey> kept = opponents.stream()
-                .filter(opponent -> opponent.teamSeason().roundReached().hasPlayed(Round.ROUND_OF_16))
-                .collect(Collectors.groupingBy(opponent -> opponent.teamSeason().teamId()))
-                .values().stream()
-                .flatMap(editions -> editions.stream()
-                        .sorted(Comparator.comparingDouble((Opponent opponent) -> opponent.strength().overall()).reversed())
-                        .limit(keptEditionsCount(editions.size())))
-                .map(opponent -> opponent.teamSeason().key())
-                .collect(Collectors.toSet());
-        return opponents.stream()
-                .map(Opponent::teamSeason)
-                .filter(teamSeason -> kept.contains(teamSeason.key()))
+    private List<TeamSeason> selectDrawable(List<TeamSeason> teamSeasons) {
+        return teamSeasons.stream()
+                .filter(teamSeason -> teamSeason.roundReached().hasPlayed(Round.ROUND_OF_16))
+                .filter(this::hasStar)
                 .toList();
     }
 
-    private long keptEditionsCount(int editions) {
-        return (editions * GameBalance.KEPT_EDITIONS_PERCENT + 99) / 100;
+    private boolean hasStar(TeamSeason teamSeason) {
+        return teamSeason.players().stream()
+                .filter(player -> player.minutes() >= GameBalance.MIN_DRAFT_MINUTES)
+                .anyMatch(player -> player.rating() >= GameBalance.MIN_DRAWABLE_STAR_RATING);
     }
 
     private record Content(List<TeamSeason> teamSeasons, Map<TeamSeasonKey, TeamSeason> byKey, List<Opponent> opponents,

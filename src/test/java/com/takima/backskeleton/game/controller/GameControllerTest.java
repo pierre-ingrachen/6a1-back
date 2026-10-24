@@ -18,6 +18,7 @@ import com.takima.backskeleton.game.exception.GameCreationRateLimitedException;
 import com.takima.backskeleton.game.service.GameCreationRateLimiter;
 import com.takima.backskeleton.game.service.GameService;
 import com.takima.backskeleton.game.service.GameViewMapper;
+import com.takima.backskeleton.game.service.TeamDrawService;
 import com.takima.backskeleton.game.service.TeamSeasonCatalog;
 import com.takima.backskeleton.game.support.GameTestContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,6 +67,11 @@ class GameControllerTest {
         DraftEligibility eligibility() {
             return GameTestContext.eligibility();
         }
+
+        @Bean
+        TeamDrawService teamDrawService() {
+            return GameTestContext.drawService();
+        }
     }
 
     @Autowired
@@ -104,7 +110,9 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.picksRemaining").value(11))
                 .andExpect(jsonPath("$.redrawsRemaining").value(3))
                 .andExpect(jsonPath("$.slots.length()").value(11))
-                .andExpect(jsonPath("$.draw.players").isNotEmpty());
+                .andExpect(jsonPath("$.draw.players").isNotEmpty())
+                .andExpect(jsonPath("$.draw.teamRedrawAvailable").isBoolean())
+                .andExpect(jsonPath("$.draw.seasonRedrawAvailable").isBoolean());
     }
 
     @Test

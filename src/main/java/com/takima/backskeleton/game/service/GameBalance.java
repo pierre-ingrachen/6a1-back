@@ -13,9 +13,9 @@ public final class GameBalance {
     public static final double EXTRA_TIME_GOAL_SHARE = 1.0 / 3;
     public static final double PENALTY_SCORING_PROBABILITY = 0.75;
 
-    public static final double PLAYER_HANDICAP = 1.0;
+    public static final double PLAYER_HANDICAP = 2.0;
 
-    public static final int KEPT_EDITIONS_PERCENT = 40;
+    public static final int MIN_DRAWABLE_STAR_RATING = 87;
 
     private GameBalance() {
     }

@@ -17,16 +17,20 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DraftServiceTest {
     private static final long SEED = 2024L;
+    private static final int SEARCHED_SEEDS = 500;
 
     private final DraftService draftService = GameTestContext.draftService();
     private final DraftEligibility eligibility = GameTestContext.eligibility();
+    private final TeamDrawService teamDrawService = GameTestContext.drawService();
 
     @Test
     void startDrawsAFirstTeamAndGrantsThreeRedraws() {
@@ -181,10 +185,17 @@ class DraftServiceTest {
         Game game = draftService.start(Formation.FOUR_THREE_THREE, SEED);
         Game afterRedraws = game;
         for (int redraw = 0; redraw < Game.INITIAL_REDRAWS; redraw++) {
-            afterRedraws = draftService.redraw(afterRedraws, redraw % 2 == 0 ? RedrawType.TEAM : RedrawType.SEASON);
+            afterRedraws = draftService.redraw(afterRedraws, teamDrawService.canRedraw(afterRedraws, RedrawType.SEASON) ? RedrawType.SEASON : RedrawType.TEAM);
         }
 
         assertThat(afterRedraws.seenDraws()).hasSize(Game.INITIAL_REDRAWS + 1);
+    }
+
+    @Test
+    void seasonRedrawOnATeamWithASingleDrawableSeasonIsRefused() {
+        Game game = gameStartingOnTeamWhere(candidate -> !teamDrawService.canRedraw(candidate, RedrawType.SEASON));
+
+        assertThatThrownBy(() -> draftService.redraw(game, RedrawType.SEASON)).isInstanceOf(NoRedrawAvailableException.class);
     }
 
     @Test
@@ -281,12 +292,9 @@ class DraftServiceTest {
 
     @Test
     void movedDraftStillOffersAPickablePlayer() {
-        Game game = gameWithOnePick(Formation.FOUR_TWO_THREE_ONE);
+        Game game = gameWithOnePickThatCanMove(Formation.FOUR_TWO_THREE_ONE);
         int from = game.picks().keySet().iterator().next();
-        PickedPlayer moved = game.picks().get(from);
-        int target = game.openSlotIndexes().stream()
-                .filter(index -> moved.canPlay(game.formation().slots().get(index)))
-                .findFirst().orElseThrow();
+        int target = movableTargets(game, from).findFirst().orElseThrow();
 
         Game updated = draftService.move(game, from, target);
 
@@ -294,11 +302,36 @@ class DraftServiceTest {
     }
 
     private Game gameWithOnePick(Formation formation) {
-        Game game = draftService.start(formation, SEED);
+        return gameWithOnePick(formation, SEED);
+    }
+
+    private Game gameWithOnePick(Formation formation, long seed) {
+        Game game = draftService.start(formation, seed);
         SeasonPlayer player = pickablePlayers(game).stream()
                 .filter(candidate -> candidate.playablePositions().size() > 1)
                 .findFirst().orElse(pickablePlayers(game).get(0));
         return draftService.pick(game, player.playerId(), eligibility.eligibleSlots(game, player).get(0));
+    }
+
+    private Game gameWithOnePickThatCanMove(Formation formation) {
+        return LongStream.range(SEED, SEED + SEARCHED_SEEDS)
+                .mapToObj(seed -> gameWithOnePick(formation, seed))
+                .filter(candidate -> movableTargets(candidate, candidate.picks().keySet().iterator().next()).findAny().isPresent())
+                .findFirst().orElseThrow();
+    }
+
+    private IntStream movableTargets(Game game, int from) {
+        PickedPlayer moved = game.picks().get(from);
+        return game.openSlotIndexes().stream()
+                .mapToInt(Integer::intValue)
+                .filter(index -> moved.canPlay(game.formation().slots().get(index)));
+    }
+
+    private Game gameStartingOnTeamWhere(Predicate<Game> condition) {
+        return LongStream.range(SEED, SEED + SEARCHED_SEEDS)
+                .mapToObj(seed -> draftService.start(Formation.FOUR_THREE_THREE, seed))
+                .filter(condition)
+                .findFirst().orElseThrow();
     }
 
     private int slotOf(Game game, FieldPosition position, int occurrence) {
