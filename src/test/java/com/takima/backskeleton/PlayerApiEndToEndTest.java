@@ -44,4 +44,20 @@ class PlayerApiEndToEndTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().get(0).get("name").asText()).isEqualTo("Kylian Mbappé");
     }
+
+    @Test
+    void teamPlayersExposeTheColumnsReadByTheNativeQuery() {
+        ResponseEntity<JsonNode> response = restTemplate.getForEntity("/teams/1/players?season=2021", JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode messi = response.getBody().get(0);
+        assertThat(messi.get("id").asInt()).isEqualTo(11119);
+        assertThat(messi.get("assists").asInt()).isEqualTo(4);
+        assertThat(messi.get("name").asText()).isEqualTo("Lionel Messi");
+        assertThat(messi.get("position").asText()).isEqualTo("Forward");
+        assertThat(messi.get("goals").asInt()).isEqualTo(5);
+        assertThat(messi.get("rating").asInt()).isEqualTo(86);
+        assertThat(messi.get("averageRating").asDouble()).isEqualTo(7.85);
+        assertThat(messi.get("matchesPlayed").asInt()).isEqualTo(8);
+    }
 }

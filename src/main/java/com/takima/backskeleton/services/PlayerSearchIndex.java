@@ -50,10 +50,6 @@ public class PlayerSearchIndex {
                 .toList();
     }
 
-    public void evict() {
-        indexedAppearances.evict();
-    }
-
     private List<IndexedAppearance> load() {
         return playerSeasonStatsDao.findAllAppearances().stream()
                 .map(appearance -> new IndexedAppearance(appearance, normalize(appearance.playerName())))

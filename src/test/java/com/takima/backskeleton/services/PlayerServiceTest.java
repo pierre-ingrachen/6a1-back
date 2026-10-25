@@ -156,21 +156,6 @@ class PlayerServiceTest {
     }
 
     @Test
-    void evictCachesForcesTheNextCallsToReloadFromTheDao() {
-        givenAppearances(appearance(1, "Kylian Mbappé", 2025, "Real Madrid"));
-        givenSeasonRows(player(TARGET_ID, "Forward", 900));
-        playerService.searchPlayers(null, "mbappe");
-        playerService.findPlayerStats(TARGET_ID, SEASON);
-
-        playerService.evictCaches();
-        playerService.searchPlayers(null, "mbappe");
-        playerService.findPlayerStats(TARGET_ID, SEASON);
-
-        verify(playerSeasonStatsDao, times(2)).findAllAppearances();
-        verify(playerSeasonStatsDao, times(2)).findBySeason(SEASON);
-    }
-
-    @Test
     void findPlayerStatsExcludesPlayersBelowMinutesThresholdFromPopulation() {
         int belowThreshold = PercentileCalculator.MINIMUM_MINUTES_FOR_PERCENTILES - 1;
         givenSeasonRows(

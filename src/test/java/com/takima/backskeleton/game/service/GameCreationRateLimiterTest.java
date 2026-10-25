@@ -79,6 +79,14 @@ class GameCreationRateLimiterTest {
         assertThatThrownBy(() -> limiter.acquire("active-client")).isInstanceOf(GameCreationRateLimitedException.class);
     }
 
+    @Test
+    void newClientsAreRejectedWhenTooManyActiveClientsAreTracked() {
+        IntStream.range(0, GameCreationRateLimiter.PURGE_THRESHOLD + 1).forEach(client -> limiter.acquire("client-" + client));
+
+        assertThatThrownBy(() -> limiter.acquire("new-client")).isInstanceOf(GameCreationRateLimitedException.class);
+        assertThatCode(() -> limiter.acquire("client-0")).doesNotThrowAnyException();
+    }
+
     private void acquireTimes(String clientKey, int times) {
         IntStream.range(0, times).forEach(attempt -> limiter.acquire(clientKey));
     }

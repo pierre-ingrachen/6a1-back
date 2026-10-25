@@ -21,10 +21,10 @@ INSERT INTO parcours_equipe_saison (annee_debut, equipe_id, tour_elimination, va
 
 INSERT INTO stats_joueur_saison
 (annee_debut, joueur_id, equipe_id, matchs_joues, entrees_en_jeu, minutes, buts, tirs, tirs_cadres,
- passes, passes_courtes_reussies, passes_longues_reussies, arrets, note, poste_note, postes_occupes, note_moyenne) VALUES
-(2021, 11119, 1, 8, 2, 640, 5, 20, 10, 150, 100, 20, 0, 86, 'Forward', 'FW', 7.85),
-(2021, 2, 3, 10, 0, 900, 7, 30, 15, 120, 70, 10, 0, 90, 'Forward', 'FW', 7.40),
-(2021, 3, 2, 6, 0, 540, 0, 0, 0, 200, 120, 30, 20, 78, 'Goalkeeper', 'GK', 6.90),
-(2021, 4, 1, 3, 1, 120, 0, 2, 1, 40, 20, 5, 0, 74, 'Midfielder', 'M(C)', 6.50),
-(2021, 4, 2, 5, 1, 300, 1, 4, 2, 80, 50, 10, 0, 75, 'Midfielder', 'M(C)', 6.80),
-(2022, 11119, 1, 4, 0, 360, 2, 10, 5, 60, 40, 5, 0, 84, 'Forward', 'FW', 7.10);
+ passes, passes_courtes_reussies, passes_longues_reussies, arrets, passes_decisives, note, poste_note, postes_occupes, note_moyenne) VALUES
+(2021, 11119, 1, 8, 2, 640, 5, 20, 10, 150, 100, 20, 0, 4, 86, 'Forward', 'FW', 7.85),
+(2021, 2, 3, 10, 0, 900, 7, 30, 15, 120, 70, 10, 0, 0, 90, 'Forward', 'FW', 7.40),
+(2021, 3, 2, 6, 0, 540, 0, 0, 0, 200, 120, 30, 20, 0, 78, 'Goalkeeper', 'GK', 6.90),
+(2021, 4, 1, 3, 1, 120, 0, 2, 1, 40, 20, 5, 0, 0, 74, 'Midfielder', 'M(C)', 6.50),
+(2021, 4, 2, 5, 1, 300, 1, 4, 2, 80, 50, 10, 0, 0, 75, 'Midfielder', 'M(C)', 6.80),
+(2022, 11119, 1, 4, 0, 360, 2, 10, 5, 60, 40, 5, 0, 0, 84, 'Forward', 'FW', 7.10);

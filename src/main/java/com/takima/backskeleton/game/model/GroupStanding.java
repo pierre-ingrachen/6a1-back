@@ -1,5 +1,7 @@
 package com.takima.backskeleton.game.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record GroupStanding(
         String teamName,
         String seasonLabel,
@@ -34,6 +36,7 @@ public record GroupStanding(
                 points + (won ? POINTS_FOR_WIN : drawn ? 1 : 0));
     }
 
+    @JsonProperty("goalDifference")
     public int goalDifference() {
         return goalsFor - goalsAgainst;
     }

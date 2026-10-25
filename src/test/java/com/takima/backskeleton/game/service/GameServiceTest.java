@@ -16,6 +16,7 @@ import com.takima.backskeleton.game.support.GameTestContext;
 import com.takima.backskeleton.game.support.MutableClock;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -166,7 +167,7 @@ class GameServiceTest {
     @Test
     void simulationReleasesTheGameLock() {
         GameLocks locks = new GameLocks();
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), locks);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), locks);
         Game game = completeDraft(service, "4-4-2");
 
         service.simulate(game.id());
@@ -191,7 +192,7 @@ class GameServiceTest {
     @Test
     void operationOnUnknownGameDoesNotLeakALock() {
         GameLocks locks = new GameLocks();
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), locks);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), locks);
 
         assertThatThrownBy(() -> service.pick(UUID.randomUUID(), 1, 0)).isInstanceOf(GameNotFoundException.class);
 
@@ -237,7 +238,7 @@ class GameServiceTest {
 
     @Test
     void creationIsRejectedOnceTheActiveGamesCeilingIsReached() {
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), 2);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), 2);
         service.create("4-3-3");
         service.create("4-3-3");
 
@@ -246,7 +247,7 @@ class GameServiceTest {
 
     @Test
     void finishedGamesFreeRoomForNewOnes() {
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), 1);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), 1);
         Game game = completeDraft(service, "4-4-2");
         service.simulate(game.id());
 

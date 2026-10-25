@@ -7,7 +7,6 @@ import com.takima.backskeleton.game.exception.GameCapacityReachedException;
 import com.takima.backskeleton.game.exception.GameCreationRateLimitedException;
 import com.takima.backskeleton.game.exception.GameNotFoundException;
 import com.takima.backskeleton.game.exception.InvalidPickException;
-import com.takima.backskeleton.game.exception.InvalidRequestException;
 import com.takima.backskeleton.game.exception.NoRedrawAvailableException;
 import com.takima.backskeleton.game.exception.UnknownFormationException;
 import org.springframework.core.Ordered;
@@ -35,7 +34,7 @@ public class GameExceptionHandler {
         return toResponse(HttpStatus.TOO_MANY_REQUESTS, exception);
     }
 
-    @ExceptionHandler({InvalidPickException.class, InvalidRequestException.class, UnknownFormationException.class})
+    @ExceptionHandler({InvalidPickException.class, UnknownFormationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException exception) {
         return toResponse(HttpStatus.BAD_REQUEST, exception);
     }

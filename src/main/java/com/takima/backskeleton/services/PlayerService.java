@@ -70,11 +70,6 @@ public class PlayerService {
                 .toList();
     }
 
-    public void evictCaches() {
-        playerSearchIndex.evict();
-        seasonStatsCache.evictAll();
-    }
-
     private PlayerSearchResultDto toSearchResult(List<PlayerAppearance> appearances, Short season) {
         PlayerAppearance latest = appearances.stream()
                 .filter(appearance -> season == null || season.equals(appearance.season()))
