@@ -6,6 +6,7 @@ import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.DTO.StatCategoryDto;
 import com.takima.backskeleton.DTO.StatDto;
 import com.takima.backskeleton.DTO.StatValueDto;
+import com.takima.backskeleton.exceptions.PlayerNotFoundException;
 import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
 import com.takima.backskeleton.services.PlayerService;
 import org.junit.jupiter.api.Test;
@@ -121,6 +122,26 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$.categories[0].stats[0].total.value").value(6.0))
                 .andExpect(jsonPath("$.categories[0].stats[0].total.topPercent").value(8))
                 .andExpect(jsonPath("$.categories[0].stats[0].per90.percentile").value(88));
+    }
+
+    @Test
+    void findPlayerSeasonsReturnsOkWithSeasonsOfThePlayer() throws Exception {
+        when(playerService.findPlayerSeasons(123))
+                .thenReturn(List.of(new PlayerSeasonTeamDto((short) 2025, "Real Madrid"), new PlayerSeasonTeamDto((short) 2024, "PSG")));
+
+        mockMvc.perform(get("/players/123/seasons"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].startYear").value(2025))
+                .andExpect(jsonPath("$[1].teamName").value("PSG"));
+    }
+
+    @Test
+    void findPlayerSeasonsReturnsNotFoundForUnknownPlayer() throws Exception {
+        when(playerService.findPlayerSeasons(999)).thenThrow(new PlayerNotFoundException(999));
+
+        mockMvc.perform(get("/players/999/seasons"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

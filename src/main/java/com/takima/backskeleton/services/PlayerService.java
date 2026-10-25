@@ -5,6 +5,7 @@ import com.takima.backskeleton.DTO.PlayerSeasonTeamDto;
 import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.DTO.StatCategoryDto;
 import com.takima.backskeleton.DTO.StatDto;
+import com.takima.backskeleton.exceptions.PlayerNotFoundException;
 import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
 import com.takima.backskeleton.models.PlayerAppearance;
 import com.takima.backskeleton.models.PlayerSeasonStats;
@@ -79,13 +80,24 @@ public class PlayerService {
                 .filter(appearance -> season == null || season.equals(appearance.season()))
                 .max(Comparator.comparing(PlayerAppearance::season))
                 .orElseThrow();
-        List<PlayerSeasonTeamDto> seasons = appearances.stream()
+        return new PlayerSearchResultDto(latest.playerId(), latest.playerName(), latest.position(), latest.teamName(), toSeasonTeams(appearances));
+    }
+
+    private List<PlayerSeasonTeamDto> toSeasonTeams(List<PlayerAppearance> appearances) {
+        return appearances.stream()
                 .collect(Collectors.toMap(PlayerAppearance::season, PlayerAppearance::teamName, (first, second) -> first, LinkedHashMap::new))
                 .entrySet().stream()
                 .map(entry -> new PlayerSeasonTeamDto(entry.getKey(), entry.getValue()))
                 .sorted(Comparator.comparing(PlayerSeasonTeamDto::startYear).reversed())
                 .toList();
-        return new PlayerSearchResultDto(latest.playerId(), latest.playerName(), latest.position(), latest.teamName(), seasons);
+    }
+
+    public List<PlayerSeasonTeamDto> findPlayerSeasons(Integer playerId) {
+        List<PlayerAppearance> appearances = playerSearchIndex.findAppearancesByPlayerId(playerId);
+        if (appearances.isEmpty()) {
+            throw new PlayerNotFoundException(playerId);
+        }
+        return toSeasonTeams(appearances);
     }
 
     public PlayerStatsDto findPlayerStats(Integer playerId, Short season) {

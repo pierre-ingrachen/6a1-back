@@ -1,6 +1,7 @@
 package com.takima.backskeleton.controllers;
 
 import com.takima.backskeleton.DTO.PlayerSearchResultDto;
+import com.takima.backskeleton.DTO.PlayerSeasonTeamDto;
 import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.services.PlayerService;
 import jakarta.validation.constraints.Size;
@@ -28,6 +29,11 @@ public class PlayerController {
     @GetMapping("/search")
     public List<PlayerSearchResultDto> searchPlayers(@RequestParam @Size(max = MAXIMUM_QUERY_LENGTH, message = "query must be at most 100 characters") String query, @RequestParam(required = false) @SeasonYear Short season) {
         return playerService.searchPlayers(season, query);
+    }
+
+    @GetMapping("/{playerId}/seasons")
+    public List<PlayerSeasonTeamDto> findPlayerSeasons(@PathVariable Integer playerId) {
+        return playerService.findPlayerSeasons(playerId);
     }
 
     @GetMapping("/{playerId}/stats")

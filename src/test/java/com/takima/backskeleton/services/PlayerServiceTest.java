@@ -6,6 +6,7 @@ import com.takima.backskeleton.DTO.PlayerSeasonTeamDto;
 import com.takima.backskeleton.DTO.PlayerStatsDto;
 import com.takima.backskeleton.DTO.StatDto;
 import com.takima.backskeleton.DTO.StatValueDto;
+import com.takima.backskeleton.exceptions.PlayerNotFoundException;
 import com.takima.backskeleton.exceptions.PlayerStatsNotFoundException;
 import com.takima.backskeleton.models.PlayerAppearance;
 import com.takima.backskeleton.models.PlayerSeasonStats;
@@ -242,6 +243,26 @@ class PlayerServiceTest {
 
         assertThatThrownBy(() -> playerService.findPlayerStats(TARGET_ID, SEASON))
                 .isInstanceOf(PlayerStatsNotFoundException.class);
+    }
+
+    @Test
+    void findPlayerSeasonsReturnsOnlySeasonsWherePlayerAppearedMostRecentFirst() {
+        givenAppearances(
+                appearance(1, "Cristiano Ronaldo", 2022, "Manchester United"),
+                appearance(1, "Cristiano Ronaldo", 2025, "Al Nassr"),
+                appearance(2, "Bryan Mbeumo", 2023, "Brentford")
+        );
+
+        assertThat(playerService.findPlayerSeasons(1))
+                .containsExactly(new PlayerSeasonTeamDto((short) 2025, "Al Nassr"), new PlayerSeasonTeamDto((short) 2022, "Manchester United"));
+    }
+
+    @Test
+    void findPlayerSeasonsFailsForUnknownPlayer() {
+        givenAppearances(appearance(1, "Cristiano Ronaldo", 2022, "Manchester United"));
+
+        assertThatThrownBy(() -> playerService.findPlayerSeasons(99))
+                .isInstanceOf(PlayerNotFoundException.class);
     }
 
     @Test
