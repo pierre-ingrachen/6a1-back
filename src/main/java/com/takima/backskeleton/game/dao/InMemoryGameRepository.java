@@ -1,7 +1,6 @@
 package com.takima.backskeleton.game.dao;
 
 import com.takima.backskeleton.game.model.Game;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.time.Clock;
@@ -25,11 +24,6 @@ public class InMemoryGameRepository implements GameRepository {
 
     private final Map<UUID, StoredGame> games = new ConcurrentHashMap<>();
     private final Clock clock;
-
-    @Autowired
-    public InMemoryGameRepository() {
-        this(Clock.systemUTC());
-    }
 
     public InMemoryGameRepository(Clock clock) {
         this.clock = clock;

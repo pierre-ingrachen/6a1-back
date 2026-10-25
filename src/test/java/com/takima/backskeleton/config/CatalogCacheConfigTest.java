@@ -13,6 +13,7 @@ import com.takima.backskeleton.game.service.DraftEligibility;
 import com.takima.backskeleton.game.service.GameCreationRateLimiter;
 import com.takima.backskeleton.game.service.GameService;
 import com.takima.backskeleton.game.service.GameViewMapper;
+import com.takima.backskeleton.game.service.TeamDrawService;
 import com.takima.backskeleton.game.service.TeamSeasonCatalog;
 import com.takima.backskeleton.game.support.GameTestContext;
 import com.takima.backskeleton.services.SeasonService;
@@ -53,6 +54,11 @@ class CatalogCacheConfigTest {
         @Bean
         DraftEligibility eligibility() {
             return GameTestContext.eligibility();
+        }
+
+        @Bean
+        TeamDrawService teamDrawService() {
+            return GameTestContext.drawService();
         }
     }
 

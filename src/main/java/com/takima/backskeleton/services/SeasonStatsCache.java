@@ -41,10 +41,6 @@ public class SeasonStatsCache {
         return snapshot;
     }
 
-    public void evictAll() {
-        snapshotsBySeason.clear();
-    }
-
     int size() {
         return snapshotsBySeason.size();
     }

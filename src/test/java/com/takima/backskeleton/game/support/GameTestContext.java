@@ -12,6 +12,7 @@ import com.takima.backskeleton.game.service.TeamDrawService;
 import com.takima.backskeleton.game.service.TeamSeasonCatalog;
 import com.takima.backskeleton.game.service.TeamStrengthService;
 
+import java.time.Clock;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class GameTestContext {
@@ -54,7 +55,7 @@ public final class GameTestContext {
     }
 
     public static GameService gameService(long firstSeed) {
-        return gameService(firstSeed, new InMemoryGameRepository());
+        return gameService(firstSeed, new InMemoryGameRepository(Clock.systemUTC()));
     }
 
     public static GameService gameService(long firstSeed, GameRepository gameRepository) {

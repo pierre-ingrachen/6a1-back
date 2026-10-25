@@ -33,10 +33,6 @@ final class ExpiringLazy<T> {
         }
     }
 
-    void evict() {
-        loaded = null;
-    }
-
     private boolean isUsable(Loaded<T> candidate) {
         return candidate != null
                 && (timeToLive.isZero() || timeToLive.isNegative() || candidate.loadedAt().plus(timeToLive).isAfter(clock.instant()));

@@ -7,6 +7,7 @@ import com.takima.backskeleton.game.model.FieldPosition;
 import com.takima.backskeleton.game.model.Formation;
 import com.takima.backskeleton.game.model.Game;
 import com.takima.backskeleton.game.model.PickedPlayer;
+import com.takima.backskeleton.game.model.RedrawType;
 import com.takima.backskeleton.game.model.SeasonPlayer;
 import com.takima.backskeleton.game.model.TeamSeason;
 import org.springframework.stereotype.Component;
@@ -19,10 +20,12 @@ import java.util.stream.IntStream;
 public class GameViewMapper {
     private final TeamSeasonCatalog catalog;
     private final DraftEligibility eligibility;
+    private final TeamDrawService teamDrawService;
 
-    public GameViewMapper(TeamSeasonCatalog catalog, DraftEligibility eligibility) {
+    public GameViewMapper(TeamSeasonCatalog catalog, DraftEligibility eligibility, TeamDrawService teamDrawService) {
         this.catalog = catalog;
         this.eligibility = eligibility;
+        this.teamDrawService = teamDrawService;
     }
 
     public GameView toView(Game game) {
@@ -80,6 +83,7 @@ public class GameViewMapper {
                         game.hasPicked(player.playerId())))
                 .toList();
         return new GameView.DrawView(teamSeason.teamId(), teamSeason.teamName(), teamSeason.country(),
-                teamSeason.seasonLabel(), players);
+                teamSeason.seasonLabel(),
+                teamDrawService.canRedraw(game, RedrawType.SEASON), teamDrawService.canRedraw(game, RedrawType.TEAM), players);
     }
 }

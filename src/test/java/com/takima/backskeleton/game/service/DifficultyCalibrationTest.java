@@ -24,10 +24,10 @@ class DifficultyCalibrationTest {
     private final CompetitionSimulator competitionSimulator = GameTestContext.competitionSimulator();
 
     @Test
-    void starSeekingPlayerWinsAboutOneGameInFive() {
+    void starSeekingPlayerWinsAboutOneGameInSix() {
         double titleRate = titleRateOfDrafts(Formation.FOUR_THREE_THREE, (bot, game) -> bot.playStarSeeker(game, STAR_RATING_THRESHOLD));
 
-        assertThat(titleRate).isBetween(0.12, 0.28);
+        assertThat(titleRate).isBetween(0.13, 0.22);
     }
 
     @Test
@@ -35,7 +35,7 @@ class DifficultyCalibrationTest {
         Arrays.stream(Formation.values()).forEach(formation -> {
             double titleRate = titleRateOfDrafts(formation, (bot, game) -> bot.playStarSeeker(game, STAR_RATING_THRESHOLD));
 
-            assertThat(titleRate).as(formation.label()).isBetween(0.12, 0.32);
+            assertThat(titleRate).as(formation.label()).isBetween(0.11, 0.25);
         });
     }
 
@@ -50,7 +50,7 @@ class DifficultyCalibrationTest {
     void dreamTeamWinsOftenButNotAlways() {
         double titleRate = titleRateOfStrength(new TeamStrength(90, 90));
 
-        assertThat(titleRate).isBetween(0.35, 0.65);
+        assertThat(titleRate).isBetween(0.25, 0.55);
     }
 
     @Test

@@ -37,6 +37,9 @@ public class GameCreationRateLimiter {
         if (windows.size() > PURGE_THRESHOLD) {
             purgeExpired();
         }
+        if (windows.size() > PURGE_THRESHOLD && !windows.containsKey(clientKey)) {
+            throw new GameCreationRateLimitedException();
+        }
         Instant now = clock.instant();
         Window window = windows.compute(clientKey, (key, current) ->
                 current != null && current.isOpenAt(now, windowLength)
@@ -52,7 +55,7 @@ public class GameCreationRateLimiter {
         windows.values().removeIf(window -> !window.isOpenAt(now, windowLength));
     }
 
-    public int size() {
+    int size() {
         return windows.size();
     }
 }

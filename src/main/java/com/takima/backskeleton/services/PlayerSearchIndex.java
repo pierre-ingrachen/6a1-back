@@ -43,8 +43,11 @@ public class PlayerSearchIndex {
                 .toList();
     }
 
-    public void evict() {
-        indexedAppearances.evict();
+    public List<PlayerAppearance> findAppearancesByPlayerId(Integer playerId) {
+        return indexedAppearances.get(this::load).stream()
+                .map(IndexedAppearance::appearance)
+                .filter(appearance -> playerId.equals(appearance.playerId()))
+                .toList();
     }
 
     private List<IndexedAppearance> load() {

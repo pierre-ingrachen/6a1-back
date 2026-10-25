@@ -43,6 +43,12 @@ class PlayerSearchIndexTest {
     }
 
     @Test
+    void findsTheAppearancesOfOnePlayerById() {
+        assertThat(index.findAppearancesByPlayerId(1)).extracting(PlayerAppearance::season).containsExactly((short) 2025, (short) 2022);
+        assertThat(index.findAppearancesByPlayerId(99)).isEmpty();
+    }
+
+    @Test
     void loadsTheAppearancesOnlyOnce() {
         index.findAppearancesByPlayerName("mb");
         index.findAppearancesByPlayerName("bryan");

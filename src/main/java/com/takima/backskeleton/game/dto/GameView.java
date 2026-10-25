@@ -28,7 +28,15 @@ public record GameView(
     ) {
     }
 
-    public record DrawView(int teamId, String teamName, String country, String seasonLabel, List<DrawPlayerView> players) {
+    public record DrawView(
+            int teamId,
+            String teamName,
+            String country,
+            String seasonLabel,
+            boolean seasonRedrawAvailable,
+            boolean teamRedrawAvailable,
+            List<DrawPlayerView> players
+    ) {
     }
 
     public record DrawPlayerView(

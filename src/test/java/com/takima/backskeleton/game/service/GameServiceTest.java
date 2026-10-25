@@ -7,6 +7,8 @@ import com.takima.backskeleton.game.exception.InvalidPickException;
 import com.takima.backskeleton.game.exception.UnknownFormationException;
 import com.takima.backskeleton.game.dao.InMemoryGameRepository;
 import com.takima.backskeleton.game.model.CompetitionResult;
+import com.takima.backskeleton.game.exception.NoRedrawAvailableException;
+import com.takima.backskeleton.game.model.Formation;
 import com.takima.backskeleton.game.model.Game;
 import com.takima.backskeleton.game.model.RedrawType;
 import com.takima.backskeleton.game.model.SeasonPlayer;
@@ -14,6 +16,7 @@ import com.takima.backskeleton.game.support.GameTestContext;
 import com.takima.backskeleton.game.support.MutableClock;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -22,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -163,7 +167,7 @@ class GameServiceTest {
     @Test
     void simulationReleasesTheGameLock() {
         GameLocks locks = new GameLocks();
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), locks);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), locks);
         Game game = completeDraft(service, "4-4-2");
 
         service.simulate(game.id());
@@ -188,7 +192,7 @@ class GameServiceTest {
     @Test
     void operationOnUnknownGameDoesNotLeakALock() {
         GameLocks locks = new GameLocks();
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), locks);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), locks);
 
         assertThatThrownBy(() -> service.pick(UUID.randomUUID(), 1, 0)).isInstanceOf(GameNotFoundException.class);
 
@@ -234,7 +238,7 @@ class GameServiceTest {
 
     @Test
     void creationIsRejectedOnceTheActiveGamesCeilingIsReached() {
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), 2);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), 2);
         service.create("4-3-3");
         service.create("4-3-3");
 
@@ -243,7 +247,7 @@ class GameServiceTest {
 
     @Test
     void finishedGamesFreeRoomForNewOnes() {
-        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(), 1);
+        GameService service = GameTestContext.gameService(11L, new InMemoryGameRepository(Clock.systemUTC()), 1);
         Game game = completeDraft(service, "4-4-2");
         service.simulate(game.id());
 
@@ -281,5 +285,21 @@ class GameServiceTest {
                 .filter(player -> !eligibility.eligibleSlots(game, player).isEmpty())
                 .findFirst()
                 .orElseThrow();
+    }
+
+    @Test
+    void refusedSeasonRedrawKeepsTheRedrawQuotaAndTheDraw() {
+        TeamDrawService teamDrawService = GameTestContext.drawService();
+        DraftService draftService = GameTestContext.draftService();
+        long seed = LongStream.range(0, 500)
+                .filter(candidate -> !teamDrawService.canRedraw(draftService.start(Formation.FOUR_THREE_THREE, candidate), RedrawType.SEASON))
+                .findFirst().orElseThrow();
+        GameService service = GameTestContext.gameService(seed);
+        Game created = service.create("4-3-3");
+
+        assertThatThrownBy(() -> service.redraw(created.id(), RedrawType.SEASON)).isInstanceOf(NoRedrawAvailableException.class);
+
+        assertThat(service.get(created.id())).isEqualTo(created);
+        assertThat(service.get(created.id()).redrawsLeft()).isEqualTo(Game.INITIAL_REDRAWS);
     }
 }

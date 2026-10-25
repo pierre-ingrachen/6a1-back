@@ -6,7 +6,6 @@ import com.takima.backskeleton.game.exception.DraftIncompleteException;
 import com.takima.backskeleton.game.exception.GameCapacityReachedException;
 import com.takima.backskeleton.game.exception.GameNotFoundException;
 import com.takima.backskeleton.game.exception.InvalidPickException;
-import com.takima.backskeleton.game.exception.InvalidRequestException;
 import com.takima.backskeleton.game.exception.NoRedrawAvailableException;
 import com.takima.backskeleton.game.exception.UnknownFormationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +73,6 @@ class ExceptionHandlersTest {
         return Stream.of(
                 new Object[]{new GameNotFoundException(GAME_ID), 404, "Game " + GAME_ID + " not found"},
                 new Object[]{new InvalidPickException("nope"), 400, "nope"},
-                new Object[]{new InvalidRequestException("playerId is required"), 400, "playerId is required"},
                 new Object[]{new UnknownFormationException("9-9-9"), 400, "Unknown formation 9-9-9"},
                 new Object[]{new DraftCompletedException(GAME_ID), 409, "Draft of game " + GAME_ID + " is already complete"},
                 new Object[]{new DraftIncompleteException(GAME_ID), 409, "Draft of game " + GAME_ID + " is not complete"},

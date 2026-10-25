@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class TeamDrawService {
@@ -32,21 +33,32 @@ public class TeamDrawService {
     }
 
     public TeamSeason redraw(Game game, RedrawType type) {
+        return pickUniformlyByTeam(game, redrawCandidates(game, type).toList())
+                .orElseThrow(() -> new NoRedrawAvailableException("No other " + type.name().toLowerCase() + " available to draw"));
+    }
+
+    public boolean canRedraw(Game game, RedrawType type) {
+        return redrawCandidates(game, type).findAny().isPresent();
+    }
+
+    private Stream<TeamSeason> redrawCandidates(Game game, RedrawType type) {
         TeamSeasonKey current = game.currentDraw();
         Predicate<TeamSeason> sameFamily = switch (type) {
             case SEASON -> teamSeason -> teamSeason.teamId() == current.teamId() && teamSeason.startYear() != current.startYear();
             case TEAM -> teamSeason -> teamSeason.startYear() == current.startYear() && teamSeason.teamId() != current.teamId();
         };
-        return pickUniformlyByTeam(game, candidates(game, sameFamily))
-                .orElseThrow(() -> new NoRedrawAvailableException("No other " + type.name().toLowerCase() + " available to draw"));
+        return candidateStream(game, sameFamily);
     }
 
     private List<TeamSeason> candidates(Game game, Predicate<TeamSeason> filter) {
+        return candidateStream(game, filter).toList();
+    }
+
+    private Stream<TeamSeason> candidateStream(Game game, Predicate<TeamSeason> filter) {
         return catalog.drawableTeamSeasons().stream()
                 .filter(teamSeason -> !game.seenDraws().contains(teamSeason.key()))
                 .filter(filter)
-                .filter(teamSeason -> eligibility.offersPick(game, teamSeason))
-                .toList();
+                .filter(teamSeason -> eligibility.offersPick(game, teamSeason));
     }
 
     private Optional<TeamSeason> pickUniformlyByTeam(Game game, List<TeamSeason> candidates) {

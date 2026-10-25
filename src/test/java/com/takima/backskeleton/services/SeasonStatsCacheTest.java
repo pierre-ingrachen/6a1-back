@@ -76,17 +76,6 @@ class SeasonStatsCacheTest {
     }
 
     @Test
-    void evictAllForcesAReload() {
-        when(dao.findBySeason(SEASON)).thenReturn(List.of(player(1, 900)));
-        cache.find(SEASON);
-
-        cache.evictAll();
-        cache.find(SEASON);
-
-        verify(dao, times(2)).findBySeason(SEASON);
-    }
-
-    @Test
     void aSlowLoadDoesNotBlockOtherSeasons() throws Exception {
         Short slowSeason = 2020;
         CountDownLatch slowLoadStarted = new CountDownLatch(1);

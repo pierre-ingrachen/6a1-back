@@ -42,14 +42,4 @@ class ExpiringLazyTest {
 
         assertThat(loads).hasValue(1);
     }
-
-    @Test
-    void evictForcesAReload() {
-        ExpiringLazy<Integer> lazy = new ExpiringLazy<>(Duration.ofHours(1), clock);
-        lazy.get(loads::incrementAndGet);
-
-        lazy.evict();
-
-        assertThat(lazy.get(loads::incrementAndGet)).isEqualTo(2);
-    }
 }

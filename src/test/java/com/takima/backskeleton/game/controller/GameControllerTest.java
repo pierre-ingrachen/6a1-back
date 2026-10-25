@@ -9,6 +9,7 @@ import com.takima.backskeleton.game.exception.UnknownFormationException;
 import com.takima.backskeleton.game.model.Formation;
 import com.takima.backskeleton.game.model.Game;
 import com.takima.backskeleton.game.model.GroupStageResult;
+import com.takima.backskeleton.game.model.GroupStanding;
 import com.takima.backskeleton.game.model.CompetitionResult;
 import com.takima.backskeleton.game.model.RedrawType;
 import com.takima.backskeleton.game.model.Round;
@@ -18,6 +19,7 @@ import com.takima.backskeleton.game.exception.GameCreationRateLimitedException;
 import com.takima.backskeleton.game.service.GameCreationRateLimiter;
 import com.takima.backskeleton.game.service.GameService;
 import com.takima.backskeleton.game.service.GameViewMapper;
+import com.takima.backskeleton.game.service.TeamDrawService;
 import com.takima.backskeleton.game.service.TeamSeasonCatalog;
 import com.takima.backskeleton.game.support.GameTestContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,6 +68,11 @@ class GameControllerTest {
         DraftEligibility eligibility() {
             return GameTestContext.eligibility();
         }
+
+        @Bean
+        TeamDrawService teamDrawService() {
+            return GameTestContext.drawService();
+        }
     }
 
     @Autowired
@@ -104,7 +111,9 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.picksRemaining").value(11))
                 .andExpect(jsonPath("$.redrawsRemaining").value(3))
                 .andExpect(jsonPath("$.slots.length()").value(11))
-                .andExpect(jsonPath("$.draw.players").isNotEmpty());
+                .andExpect(jsonPath("$.draw.players").isNotEmpty())
+                .andExpect(jsonPath("$.draw.teamRedrawAvailable").isBoolean())
+                .andExpect(jsonPath("$.draw.seasonRedrawAvailable").isBoolean());
     }
 
     @Test
@@ -253,6 +262,17 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.outcome").value("SEMI_FINAL"))
                 .andExpect(jsonPath("$.champion").value(false))
                 .andExpect(jsonPath("$.groupStage.rank").value(2));
+    }
+
+    @Test
+    void simulationExposesTheGoalDifferenceOfEachStanding() throws Exception {
+        GroupStanding standing = GroupStanding.empty("Your team", "", true).withMatch(3, 1);
+        CompetitionResult result = new CompetitionResult(
+                new TeamStrength(80, 78), new GroupStageResult(List.of(), List.of(standing), 1), List.of(), Round.GROUP_STAGE, false);
+        when(gameService.simulate(game.id())).thenReturn(result);
+
+        mockMvc.perform(post("/games/" + game.id() + "/simulation"))
+                .andExpect(jsonPath("$.groupStage.standings[0].goalDifference").value(2));
     }
 
     @Test
