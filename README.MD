@@ -206,3 +206,7 @@ Le rapport de couverture JaCoCo est généré dans `target/site/jacoco/index.htm
   ```bash
   git config core.hooksPath .githooks
   ```
+
+## Utilisation de l'IA
+
+Le projet a été développé avec Claude Code, en petites étapes vérifiées après chaque modification (garde de règles, tests, build, puis audit indépendant par un sous-agent). Le détail (justification, fonctionnement itératif, conclusions) est dans le [README du front](https://github.com/pierre-ingrachen/6a1-front#utilisation-de-lia).
